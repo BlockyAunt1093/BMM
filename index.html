@@ -1,0 +1,2705 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Block's Mining Manager v1.1</title>
+<style>
+:root{
+  --bg:#0f141b;--panel:#171e27;--panel2:#1d2631;--line:#2b3744;--text:#edf2f7;
+  --muted:#9aa8b6;--accent:#d4933e;--accent2:#8b5e2d;--green:#54c98a;--blue:#63a4ff;
+  --danger:#ff7b7b;--shadow:0 14px 34px rgba(0,0,0,.28)
+}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(circle at 15% 15%,rgba(95,115,135,.10),transparent 24%),radial-gradient(circle at 85% 5%,rgba(212,147,62,.09),transparent 20%),var(--bg);color:var(--text);font-family:"Malgun Gothic","Noto Sans KR",sans-serif}
+button,input{font:inherit} button{cursor:pointer}
+.shell{max-width:1450px;margin:0 auto;padding:20px}
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:18px;padding:18px 20px;border:1px solid var(--line);border-radius:20px;background:linear-gradient(180deg,#19222d,#141b23);box-shadow:var(--shadow)}
+.brand{display:flex;align-items:center;gap:14px} .brand h1{margin:0;font-size:24px} .brand p{margin:4px 0 0;color:var(--muted);font-size:13px}
+.logo{width:54px;height:54px;border-radius:14px;display:grid;place-items:center;background:linear-gradient(145deg,#d9a04e,#765029);font-weight:900;font-size:24px}
+.top-actions{display:flex;gap:8px;flex-wrap:wrap} .btn{border:1px solid var(--line);background:#202a35;color:var(--text);padding:10px 13px;border-radius:12px;font-weight:800}
+.btn.danger{color:#ffd5d5;border-color:#633e45;background:#2a2025}
+.layout{display:grid;grid-template-columns:540px minmax(0,1fr);gap:18px} @media(max-width:1080px){.layout{grid-template-columns:1fr}}
+.panel,.card{border:1px solid var(--line);border-radius:22px;background:linear-gradient(180deg,var(--panel),#141b23);box-shadow:var(--shadow);overflow:hidden}
+.tabs{display:grid;grid-template-columns:repeat(3,1fr);border-bottom:1px solid var(--line)} .tab{border:0;background:transparent;color:var(--muted);padding:16px 8px;font-weight:900;border-bottom:3px solid transparent}
+.tab.active{color:#fff;border-bottom-color:var(--accent);background:rgba(255,255,255,.02)} .tabpage{display:none;padding:20px} .tabpage.active{display:block}
+.section-title{font-size:18px;font-weight:900;margin:0 0 7px} .help{font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:14px}
+.stack{display:flex;flex-direction:column;gap:12px}
+.entry{background:linear-gradient(180deg,#1c2530,#18212b);border:1px solid var(--line);border-radius:17px;padding:14px}
+.entry-head{display:grid;grid-template-columns:58px 1fr;gap:12px;align-items:center}
+.item-image{width:52px;height:52px;object-fit:contain;image-rendering:pixelated;filter:drop-shadow(0 4px 5px rgba(0,0,0,.35))}
+.name{font-size:18px;font-weight:900} .desc{font-size:12px;color:var(--muted);margin-top:4px}
+.fields3{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-top:12px} .fields6{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-top:12px}
+@media(max-width:620px){.fields3,.fields6{grid-template-columns:1fr}}
+.field label{display:block;font-size:11px;color:var(--muted);margin-bottom:5px} .field input{width:100%;border:1px solid var(--line);border-radius:11px;padding:11px 10px;background:#0f151c;color:var(--text);font-size:15px;outline:none}
+.field input:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(99,164,255,.13)}
+.output-box{border:1px solid #4a5968;background:#131a22;border-radius:11px;padding:10px;font-size:12px;line-height:1.5;color:#dce6ef}
+.output-box b{display:block;color:var(--green);font-size:15px;margin-top:3px}
+.xpbox{border-color:#534874;background:linear-gradient(180deg,#211d31,#1b1828)} .subblock{margin-top:12px;padding:12px;border:1px solid #443a62;border-radius:14px;background:#171421}
+.subblock-title{font-weight:900;font-size:13px;margin-bottom:9px}
+.level-card{border:1px solid var(--line);border-radius:18px;padding:17px;background:#151d26} .level-row{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:8px}
+.level-row h3{margin:0;font-size:17px} .level-number{width:120px!important;text-align:center;font-size:18px!important;font-weight:900;border-color:var(--blue)!important}
+input[type=range]{width:100%;accent-color:var(--accent)} input[type=range][disabled]{opacity:.72} input:disabled{color:#e8eef5!important;-webkit-text-fill-color:#e8eef5;background:#25303c!important;border-color:#4a5969!important;opacity:1!important}
+.scale{display:flex;justify-content:space-between;color:var(--muted);font-size:11px;margin-top:4px}
+.stat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px;margin-top:14px} .stat{border:1px solid var(--line);border-radius:13px;padding:12px;text-align:center;background:#1c2530}
+.stat span{display:block;color:var(--muted);font-size:11px} .stat b{display:block;margin-top:5px;font-size:17px}
+.note{padding:11px;border-radius:12px;margin-top:12px;font-size:12px;line-height:1.5;color:#f1d2a4;background:#2a2117;border:1px solid #5f4828}
+.main{display:flex;flex-direction:column;gap:16px} .hero{border:1px solid #8c6537;border-radius:24px;padding:24px;background:linear-gradient(150deg,#9b6c34,#6d4825);box-shadow:var(--shadow)}
+.hero-label{font-size:13px;color:#f5dfc0;font-weight:900} .hero-total{font-size:50px;font-weight:900;letter-spacing:-1px;margin:10px 0 17px}
+.hero-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;border-top:1px solid rgba(255,255,255,.22);padding-top:15px} @media(max-width:700px){.hero-grid{grid-template-columns:repeat(2,1fr)}.hero-total{font-size:38px}}
+.hero-stat{text-align:center} .hero-stat span{display:block;color:#edd6b9;font-size:11px} .hero-stat b{display:block;margin-top:5px;font-size:16px}
+.card{padding:20px} .card-title{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px} .card-title h2{margin:0;font-size:20px}
+.badge{padding:5px 9px;border-radius:999px;background:#263342;border:1px solid var(--line);font-size:11px;font-weight:900;color:#c7d2de}
+.info-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:9px} @media(max-width:700px){.info-grid{grid-template-columns:repeat(2,1fr)}}
+.info{padding:13px;border:1px solid var(--line);border-radius:13px;background:#151d26;text-align:center} .info span{display:block;color:var(--muted);font-size:11px} .info b{display:block;margin-top:6px;font-size:18px}
+.result-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:11px} @media(max-width:760px){.result-grid{grid-template-columns:1fr}}
+.result{padding:15px;border:1px solid var(--line);border-radius:15px;background:#151d26} .result-head{display:flex;align-items:center;gap:10px} .result-head img{width:34px;height:34px;object-fit:contain;image-rendering:pixelated}
+.result-name{font-size:12px;color:var(--muted)} .result-value{font-size:23px;font-weight:900;margin-top:10px} .result-detail{font-size:12px;color:var(--green);font-weight:800;line-height:1.5;margin-top:5px}
+.rows{border:1px solid var(--line);border-radius:14px;padding:4px 13px;background:#151d26} .row{display:flex;justify-content:space-between;gap:14px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13px} .row:last-child{border-bottom:0}
+.footer{text-align:center;color:var(--muted);font-size:11px;padding:4px 0 16px}
+.special-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:11px}
+@media(max-width:760px){.special-grid{grid-template-columns:1fr}}
+.special-card{border:1px solid var(--line);border-radius:16px;background:#151d26;padding:15px}
+.special-head{display:flex;align-items:center;gap:11px}
+.special-icon{
+  width:42px;height:42px;border-radius:10px;display:grid;place-items:center;
+  font-size:25px;box-shadow:inset 0 0 0 3px rgba(255,255,255,.06),0 3px 8px rgba(0,0,0,.25)
+}
+.special-item-image{
+  width:42px;height:42px;object-fit:contain;image-rendering:pixelated;
+  filter:drop-shadow(0 3px 4px rgba(0,0,0,.35))
+}
+.ancient-fragment-image{width:52px;height:44px}
+
+.ancient-icon{background:linear-gradient(135deg,#6f4d3c,#2f2624)}
+.shard-icon{background:linear-gradient(135deg,#70b8ff,#324b8f)}
+.luck-icon{background:linear-gradient(135deg,#b5ff8a,#3e9d48)}
+.special-name{font-weight:900}
+.special-desc{font-size:11px;color:var(--muted);margin-top:3px;line-height:1.4}
+.special-fields{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.special-result{margin-top:10px;padding:10px;border-radius:11px;background:#10161d;border:1px solid var(--line);font-size:12px;line-height:1.5}
+.special-result b{color:var(--green)}
+
+
+#measurementLockNotice{
+  display:inline-flex;
+  width:auto;
+  margin:0 0 12px;
+  padding:7px 10px;
+  color:#f3c97f;
+}
+#measurementLockNotice.unlocked{
+  color:#8ce0ab;
+  background:#17291f;
+  border-color:#315f43;
+}
+
+
+.shard-placeholder{
+  min-height:116px;
+  display:flex;
+  align-items:center;
+}
+.shard-placeholder .special-head{
+  width:100%;
+}
+.shard-placeholder .special-name{
+  font-size:18px;
+}
+
+
+/* v1.10 polish */
+.special-grid{
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  align-items:stretch;
+}
+.special-card{
+  position:relative;
+  overflow:hidden;
+  background:
+    linear-gradient(180deg,rgba(28,38,50,.98),rgba(18,25,34,.98));
+}
+.special-card::after{
+  content:"";
+  position:absolute;
+  width:110px;
+  height:110px;
+  right:-44px;
+  bottom:-55px;
+  border-radius:50%;
+  background:radial-gradient(circle,rgba(255,255,255,.06),transparent 65%);
+  pointer-events:none;
+}
+.shard-card{
+  border-color:#405a86;
+  box-shadow:inset 0 1px 0 rgba(125,175,255,.06);
+}
+.shard-card:hover{
+  border-color:#5b7db3;
+}
+.shard-card .special-result b{
+  color:#81b6ff;
+}
+.special-fields{
+  grid-template-columns:repeat(3,1fr);
+}
+.special-result{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:12px;
+}
+.special-result span{
+  color:var(--muted);
+}
+.special-result b{
+  font-size:17px;
+}
+.card{
+  box-shadow:0 16px 36px rgba(0,0,0,.24);
+}
+.hero{
+  border-color:#a8793e;
+}
+.hero-total{
+  letter-spacing:-1.5px;
+}
+.tab.active{
+  box-shadow:inset 0 -1px 0 rgba(255,255,255,.04);
+}
+@media(max-width:760px){
+  .special-grid{grid-template-columns:1fr}
+  .special-fields{grid-template-columns:1fr}
+}
+
+
+/* PMM v2.0 white interface */
+:root{
+  --bg:#eef2f6;--panel:#ffffff;--panel2:#f8fafc;--line:#d9e1ea;--text:#182230;
+  --muted:#667085;--accent:#b9782f;--accent2:#8b5a25;--green:#168a5b;--blue:#2878d0;
+  --danger:#c53f4d;--shadow:0 14px 34px rgba(31,45,61,.10)
+}
+body{
+  background:
+    radial-gradient(circle at 8% 0%,rgba(87,132,174,.10),transparent 26%),
+    radial-gradient(circle at 92% 0%,rgba(216,158,77,.10),transparent 24%),
+    linear-gradient(180deg,#f8fafc 0%,#eef2f6 100%);
+  color:var(--text)
+}
+.topbar{background:rgba(255,255,255,.94);border-color:var(--line);box-shadow:0 10px 28px rgba(31,45,61,.10)}
+.brand p,.help,.desc,.field label,.scale,.result-name,.footer,.info span,.stat span,.special-desc,.hero-stat span{color:var(--muted)}
+.logo{background:linear-gradient(145deg,#e8b45e,#9c642d);color:#fff}
+.btn{background:#fff;color:var(--text);border-color:#cfd8e3;box-shadow:0 3px 8px rgba(31,45,61,.05)}
+.btn:hover{background:#f8fafc;border-color:#9fb0c2}
+.btn.danger{color:#b42d3a;border-color:#efc5ca;background:#fff7f8}
+.panel,.card{background:rgba(255,255,255,.97);border-color:var(--line);box-shadow:var(--shadow)}
+.tabs{border-color:var(--line)}
+.tab{color:#758294}
+.tab.active{color:#17212d;border-bottom-color:var(--accent);background:#fffaf3}
+.tab:hover{color:#17212d;background:#f7f9fb}
+.entry{background:linear-gradient(180deg,#ffffff,#f8fafc);border-color:var(--line)}
+.entry:hover{border-color:#b6c5d4;box-shadow:0 10px 24px rgba(31,45,61,.10)}
+.entry::before{background:linear-gradient(180deg,var(--accent),transparent 88%)}
+.field input{background:#fff;color:var(--text);border-color:#cfd8e3}
+.field input:hover{background:#fff;border-color:#9fb0c2}
+.field input:focus{background:#fff;border-color:var(--blue);box-shadow:0 0 0 3px rgba(40,120,208,.12)}
+input:disabled{color:#435064!important;-webkit-text-fill-color:#435064;background:#edf1f5!important;border-color:#d3dce6!important}
+.level-card,.stat,.info,.result,.rows,.special-card,.output-box,.special-result{background:#f8fafc;border-color:var(--line)}
+.note{color:#8a5a16;background:#fff7e8;border-color:#f1d59b}
+.hero{
+  background:radial-gradient(circle at 88% 12%,rgba(255,255,255,.24),transparent 24%),linear-gradient(145deg,#c38a43,#8c5b28);
+  border-color:#b57935;color:#fff
+}
+.hero-stat span{color:#f5e4cf}
+.badge{background:#f3f6f9;color:#566578;border-color:#d7e0e9}
+.xpbox{border-color:#d7cbed;background:linear-gradient(180deg,#fcfaff,#f7f2ff)}
+.subblock{border-color:#ddd3ed;background:#fff}
+.xp-card{border-color:#d7cbed;background:linear-gradient(180deg,#fcfaff,#f7f2ff)}
+.shard-card{border-color:#bfd2ea;background:linear-gradient(180deg,#f8fbff,#eff6ff)}
+.special-card:hover,.result:hover,.info:hover,.stat:hover{border-color:#b2c3d3;background:#fff}
+.result-detail,.special-result b{color:var(--green)}
+.footer{border-top:1px solid #e1e7ee}
+.measurement-status{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:12px 0}
+.measurement-status>div{border:1px solid var(--line);background:#f8fafc;border-radius:13px;padding:12px}
+.measurement-status span{display:block;color:var(--muted);font-size:11px}
+.measurement-status b{display:block;margin-top:5px;font-size:14px}
+.measurement-actions{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+#measurementLockNotice.unlocked{color:#176b48;background:#ecf9f2;border-color:#b9e4cd}
+@media(max-width:640px){.measurement-status{grid-template-columns:1fr}}
+
+
+/* PMM v2.1 enhanced interface */
+:root{
+  --brand:#b8772f;
+  --brand-dark:#8d5622;
+  --brand-soft:#fff7ec;
+  --blue-soft:#eff6ff;
+  --green-soft:#effaf4;
+  --red-soft:#fff3f4;
+}
+.shell{max-width:1500px}
+.topbar{
+  border-radius:22px;
+  padding:16px 20px;
+  box-shadow:0 12px 34px rgba(36,50,68,.11);
+}
+.brand h1{letter-spacing:-.5px}
+.logo{
+  box-shadow:inset 0 0 0 3px rgba(255,255,255,.2),0 7px 16px rgba(156,100,45,.22);
+}
+.btn.primary{
+  color:#fff;
+  background:linear-gradient(145deg,#c58b47,#9c642d);
+  border-color:#9d662f;
+}
+.btn.primary:hover{background:linear-gradient(145deg,#d09a57,#a86d32)}
+.utility-card{
+  border:1px solid var(--line);
+  border-radius:19px;
+  background:rgba(255,255,255,.95);
+  box-shadow:0 10px 28px rgba(31,45,61,.08);
+  padding:12px;
+}
+.quick-actions{
+  display:grid;
+  grid-template-columns:repeat(5,minmax(0,1fr));
+  gap:9px;
+}
+.quick-btn{
+  min-width:0;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  text-align:left;
+  padding:12px;
+  border:1px solid var(--line);
+  border-radius:14px;
+  background:#fff;
+  color:var(--text);
+  transition:transform .16s ease,border-color .16s ease,box-shadow .16s ease;
+}
+.quick-btn:hover{
+  transform:translateY(-2px);
+  border-color:#b7c5d4;
+  box-shadow:0 9px 18px rgba(31,45,61,.08);
+}
+.quick-btn .quick-icon{
+  width:34px;height:34px;border-radius:10px;
+  display:grid;place-items:center;flex:0 0 auto;
+  background:#f3f6f9;color:#526479;font-weight:900;font-size:18px;
+}
+.quick-btn b{display:block;font-size:13px}
+.quick-btn small{display:block;margin-top:3px;color:var(--muted);font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.quick-btn.danger-soft .quick-icon{background:var(--red-soft);color:#ba3341}
+.card-subtitle{margin:4px 0 0;color:var(--muted);font-size:12px}
+.analytics-layout{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(240px,.7fr);gap:14px}
+.ranking-list{display:flex;flex-direction:column;gap:9px}
+.ranking-row{
+  display:grid;
+  grid-template-columns:30px minmax(110px,.7fr) minmax(120px,1.3fr) auto;
+  align-items:center;
+  gap:10px;
+  padding:11px 12px;
+  border:1px solid var(--line);
+  border-radius:13px;
+  background:#fbfcfd;
+}
+.rank-number{
+  width:28px;height:28px;display:grid;place-items:center;
+  border-radius:9px;background:#eef2f6;color:#647286;font-weight:900;font-size:12px;
+}
+.ranking-row:first-child .rank-number{background:#fff1d9;color:#9a641d}
+.rank-name{font-weight:850;font-size:13px}
+.rank-bar{height:9px;border-radius:999px;background:#e8edf2;overflow:hidden}
+.rank-bar>span{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,#c88d49,#e4b872);transition:width .3s ease}
+.rank-value{font-weight:900;font-size:13px;white-space:nowrap}
+.summary-panel{display:flex;flex-direction:column;gap:9px}
+.summary-metric{
+  border:1px solid var(--line);
+  border-radius:14px;
+  padding:13px;
+  background:linear-gradient(180deg,#fff,#f8fafc);
+}
+.summary-metric span{display:block;color:var(--muted);font-size:11px}
+.summary-metric b{display:block;margin-top:6px;font-size:14px}
+.summary-metric strong{display:block;margin-top:3px;color:var(--green);font-size:18px}
+.empty-state{
+  padding:26px 14px;
+  border:1px dashed #cbd5df;
+  border-radius:14px;
+  text-align:center;
+  color:var(--muted);
+  font-size:12px;
+  background:#fafcfd;
+}
+.toast{
+  position:fixed;right:24px;bottom:24px;z-index:100;
+  min-width:220px;max-width:min(360px,calc(100vw - 32px));
+  padding:12px 15px;border-radius:13px;
+  color:#fff;background:#253242;
+  box-shadow:0 14px 34px rgba(22,32,44,.24);
+  opacity:0;transform:translateY(12px);pointer-events:none;
+  transition:opacity .2s ease,transform .2s ease;
+  font-size:13px;font-weight:800;
+}
+.toast.show{opacity:1;transform:translateY(0)}
+.modal-backdrop{
+  position:fixed;inset:0;z-index:110;
+  display:grid;place-items:center;padding:18px;
+  background:rgba(28,39,51,.35);backdrop-filter:blur(5px);
+}
+.modal-backdrop[hidden]{display:none}
+.modal{
+  width:min(540px,100%);
+  max-height:min(680px,85vh);
+  overflow:auto;
+  border:1px solid var(--line);
+  border-radius:20px;background:#fff;
+  box-shadow:0 24px 70px rgba(28,39,51,.24);
+  padding:18px;
+}
+.modal-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:14px}
+.modal-head h3{margin:0;font-size:20px}
+.modal-head p{margin:5px 0 0;color:var(--muted);font-size:12px}
+.icon-btn{
+  width:34px;height:34px;border:1px solid var(--line);border-radius:10px;
+  background:#fff;color:#5c6979;font-size:22px;line-height:1
+}
+.preset-list{display:flex;flex-direction:column;gap:9px}
+.preset-item{
+  display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;
+  padding:12px;border:1px solid var(--line);border-radius:13px;background:#f9fbfc
+}
+.preset-item h4{margin:0;font-size:14px}
+.preset-item p{margin:4px 0 0;color:var(--muted);font-size:11px}
+.preset-actions{display:flex;gap:6px}
+.preset-actions button{padding:8px 10px;border:1px solid var(--line);border-radius:9px;background:#fff;font-weight:800;font-size:11px}
+.preset-actions button.delete{color:#b32f3c;background:#fff6f7;border-color:#efcbd0}
+@media(max-width:1100px){
+  .quick-actions{grid-template-columns:repeat(3,1fr)}
+}
+@media(max-width:760px){
+  .analytics-layout{grid-template-columns:1fr}
+  .ranking-row{grid-template-columns:28px 1fr auto}
+  .rank-bar{grid-column:2/4}
+  .quick-actions{grid-template-columns:1fr 1fr}
+}
+@media(max-width:480px){
+  .quick-actions{grid-template-columns:1fr}
+  .top-actions{width:100%}
+  .top-actions .btn{flex:1}
+}
+
+
+/* PMM v2.1.1 readability pass */
+html{
+  font-size:16px;
+  -webkit-text-size-adjust:100%;
+  text-size-adjust:100%;
+}
+body{
+  font-family:"Pretendard","Noto Sans KR","Malgun Gothic","Apple SD Gothic Neo",Arial,sans-serif;
+  font-size:16px;
+  line-height:1.55;
+  letter-spacing:-0.01em;
+}
+.brand h1{
+  font-size:27px;
+  line-height:1.25;
+  font-weight:900;
+}
+.brand p{
+  font-size:14px;
+  line-height:1.45;
+  color:#536273;
+}
+.section-title{
+  font-size:21px;
+  line-height:1.35;
+}
+.card-title h2{
+  font-size:22px;
+  line-height:1.35;
+}
+.card-subtitle,
+.help,
+.desc{
+  font-size:14px;
+  line-height:1.65;
+  color:#596879;
+}
+.name{
+  font-size:19px;
+  line-height:1.35;
+}
+.field label{
+  font-size:13px;
+  line-height:1.45;
+  color:#4f5e70;
+  font-weight:750;
+}
+.field input,
+.level-number{
+  min-height:46px;
+  font-size:17px;
+  line-height:1.3;
+  font-weight:700;
+  color:#172231;
+}
+.field input::placeholder{
+  color:#8a98a8;
+}
+.tab{
+  font-size:15px;
+  line-height:1.35;
+  padding:17px 10px;
+}
+.btn{
+  min-height:42px;
+  font-size:14px;
+  line-height:1.25;
+  font-weight:850;
+}
+.quick-btn b{
+  font-size:14px;
+  line-height:1.35;
+}
+.quick-btn small{
+  font-size:12px;
+  line-height:1.4;
+  white-space:normal;
+  overflow:visible;
+  text-overflow:clip;
+}
+.quick-btn{
+  min-height:72px;
+}
+.quick-btn .quick-icon{
+  width:38px;
+  height:38px;
+  font-size:19px;
+}
+.hero-label{
+  font-size:15px;
+  line-height:1.5;
+}
+.hero-total{
+  font-size:54px;
+  line-height:1.1;
+}
+.hero-stat span{
+  font-size:12px;
+  line-height:1.35;
+}
+.hero-stat b{
+  font-size:17px;
+  line-height:1.4;
+}
+.info span,
+.stat span{
+  font-size:12px;
+  line-height:1.4;
+  color:#5d6a79;
+}
+.info b,
+.stat b{
+  font-size:19px;
+  line-height:1.35;
+}
+.output-box,
+.special-result{
+  font-size:13px;
+  line-height:1.6;
+}
+.output-box b,
+.special-result b{
+  font-size:16px;
+  line-height:1.45;
+}
+.result-name{
+  font-size:13px;
+  line-height:1.4;
+  color:#596879;
+}
+.result-value{
+  font-size:25px;
+  line-height:1.3;
+}
+.result-detail{
+  font-size:13px;
+  line-height:1.65;
+}
+.badge{
+  font-size:12px;
+  line-height:1.3;
+}
+.row{
+  font-size:14px;
+  line-height:1.55;
+}
+.row b{
+  text-align:right;
+}
+.ranking-row{
+  grid-template-columns:34px minmax(130px,.8fr) minmax(150px,1.3fr) auto;
+}
+.rank-number{
+  width:31px;
+  height:31px;
+  font-size:13px;
+}
+.rank-name{
+  font-size:14px;
+  line-height:1.4;
+}
+.rank-value{
+  font-size:14px;
+}
+.summary-metric span{
+  font-size:12px;
+  line-height:1.4;
+}
+.summary-metric b{
+  font-size:15px;
+  line-height:1.4;
+}
+.summary-metric strong{
+  font-size:20px;
+  line-height:1.35;
+}
+.measurement-status span{
+  font-size:12px;
+  line-height:1.4;
+}
+.measurement-status b{
+  font-size:15px;
+  line-height:1.45;
+}
+.note{
+  font-size:13px;
+  line-height:1.6;
+}
+.preset-item h4{
+  font-size:15px;
+}
+.preset-item p{
+  font-size:12px;
+  line-height:1.5;
+}
+.preset-actions button{
+  font-size:12px;
+}
+.footer{
+  font-size:12px;
+  line-height:1.6;
+  color:#687687;
+}
+.modal-head h3{
+  font-size:22px;
+}
+.modal-head p{
+  font-size:13px;
+  line-height:1.55;
+}
+.toast{
+  font-size:14px;
+  line-height:1.5;
+}
+
+/* Prevent labels and numbers from being cut off */
+.entry,
+.card,
+.special-card,
+.info,
+.stat,
+.result,
+.summary-metric,
+.measurement-status>div{
+  overflow:visible;
+}
+.fields3,
+.fields6,
+.special-fields{
+  align-items:stretch;
+}
+.field{
+  min-width:0;
+}
+.field label,
+.quick-btn span,
+.rank-name,
+.result-detail,
+.output-box,
+.special-result,
+.card-subtitle,
+.help,
+.desc{
+  overflow-wrap:anywhere;
+  word-break:keep-all;
+}
+input[type=number]{
+  font-variant-numeric:tabular-nums;
+}
+
+/* Better spacing for readability */
+.entry{
+  padding:17px;
+}
+.card{
+  padding:22px;
+}
+.info,
+.stat{
+  padding:15px;
+}
+.result{
+  padding:17px;
+}
+.subblock{
+  padding:14px;
+}
+.fields3,
+.fields6,
+.special-fields{
+  gap:11px;
+}
+.stack{
+  gap:14px;
+}
+
+/* Stronger contrast on white theme */
+body,
+.panel,
+.card,
+.entry,
+.field input,
+.quick-btn,
+.modal,
+.preset-item{
+  color:#172231;
+}
+.help,
+.desc,
+.card-subtitle,
+.brand p,
+.footer{
+  color:#566576;
+}
+.field label,
+.info span,
+.stat span,
+.summary-metric span,
+.measurement-status span{
+  color:#4f5e6e;
+}
+
+/* Responsive typography */
+@media(max-width:900px){
+  .brand h1{font-size:24px}
+  .hero-total{font-size:46px}
+  .card-title h2{font-size:20px}
+}
+@media(max-width:620px){
+  html{font-size:15px}
+  .shell{padding:10px}
+  .brand h1{font-size:21px}
+  .brand p{font-size:13px}
+  .section-title{font-size:19px}
+  .card-title h2{font-size:19px}
+  .hero-total{font-size:38px}
+  .field input,.level-number{font-size:16px;min-height:44px}
+  .tab{font-size:14px;padding:14px 7px}
+  .ranking-row{
+    grid-template-columns:32px minmax(0,1fr) auto;
+  }
+  .rank-bar{
+    grid-column:2/4;
+  }
+  .row{
+    align-items:flex-start;
+    flex-direction:column;
+    gap:4px;
+  }
+  .row b{
+    text-align:left;
+  }
+}
+
+
+/* PMM v2.1.3 input visibility fix */
+.field input,
+.field input:hover,
+.field input:focus,
+.field input:active,
+.field input:focus-visible,
+input[type="number"],
+input[type="number"]:hover,
+input[type="number"]:focus,
+input[type="number"]:active{
+  color:#172231 !important;
+  -webkit-text-fill-color:#172231 !important;
+  caret-color:#172231 !important;
+  background:#ffffff !important;
+  border-color:#c7d2de !important;
+  opacity:1 !important;
+  filter:none !important;
+  text-shadow:none !important;
+  box-shadow:none;
+}
+
+.field input:hover,
+input[type="number"]:hover{
+  color:#172231 !important;
+  -webkit-text-fill-color:#172231 !important;
+  background:#ffffff !important;
+  border-color:#9eb0c2 !important;
+}
+
+.field input:focus,
+.field input:focus-visible,
+input[type="number"]:focus,
+input[type="number"]:focus-visible{
+  color:#111b28 !important;
+  -webkit-text-fill-color:#111b28 !important;
+  background:#ffffff !important;
+  border-color:#2878d0 !important;
+  box-shadow:0 0 0 4px rgba(40,120,208,.14) !important;
+  outline:none !important;
+}
+
+.field input::selection,
+input[type="number"]::selection{
+  color:#172231 !important;
+  background:#cfe4ff !important;
+}
+
+/* Keep browser autofill and spinner interaction readable */
+.field input:-webkit-autofill,
+.field input:-webkit-autofill:hover,
+.field input:-webkit-autofill:focus{
+  -webkit-text-fill-color:#172231 !important;
+  box-shadow:0 0 0 1000px #ffffff inset !important;
+  transition:background-color 9999s ease-out 0s;
+}
+
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button{
+  opacity:1;
+  filter:none;
+}
+
+/* Prevent parent hover effects from recoloring inputs */
+.entry:hover .field input,
+.card:hover .field input,
+.special-card:hover .field input,
+.subblock:hover .field input{
+  color:#172231 !important;
+  -webkit-text-fill-color:#172231 !important;
+  background:#ffffff !important;
+}
+
+/* Disabled values remain visible */
+.field input:disabled,
+input[type="number"]:disabled{
+  color:#445266 !important;
+  -webkit-text-fill-color:#445266 !important;
+  background:#edf1f5 !important;
+  border-color:#d1dbe5 !important;
+  opacity:1 !important;
+}
+
+
+/* BMM v2.1.3 branding and full white-theme fix */
+html,body{
+  background:#f4f7fa !important;
+  color:#172231 !important;
+}
+body{
+  background:
+    radial-gradient(circle at 8% 0%,rgba(106,146,185,.08),transparent 27%),
+    radial-gradient(circle at 92% 0%,rgba(215,165,94,.08),transparent 24%),
+    linear-gradient(180deg,#ffffff 0%,#f3f6f9 100%) !important;
+}
+.topbar{
+  position:sticky;
+  top:12px;
+  z-index:20;
+  background:#ffffff !important;
+  color:#172231 !important;
+  border:1px solid #d9e1ea !important;
+  box-shadow:0 12px 30px rgba(31,45,61,.10) !important;
+  backdrop-filter:none !important;
+}
+.brand{
+  min-width:0;
+  flex:1 1 auto;
+}
+.brand > div:last-child{
+  min-width:0;
+}
+.brand h1{
+  color:#172231 !important;
+  -webkit-text-fill-color:#172231 !important;
+  text-shadow:none !important;
+  opacity:1 !important;
+  overflow-wrap:anywhere;
+}
+.brand p{
+  color:#5c6979 !important;
+  -webkit-text-fill-color:#5c6979 !important;
+  text-shadow:none !important;
+  opacity:1 !important;
+}
+.logo{
+  width:64px !important;
+  min-width:64px !important;
+  height:64px !important;
+  padding:0 6px !important;
+  overflow:hidden !important;
+  white-space:nowrap !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  border-radius:16px !important;
+  font-size:20px !important;
+  line-height:1 !important;
+  letter-spacing:-0.5px !important;
+  font-weight:900 !important;
+  color:#ffffff !important;
+  -webkit-text-fill-color:#ffffff !important;
+  background:linear-gradient(145deg,#e9b966,#9d662f) !important;
+  border:1px solid #8d5a2a !important;
+  box-shadow:
+    inset 0 0 0 3px rgba(255,255,255,.18),
+    0 7px 16px rgba(142,91,42,.22) !important;
+  text-shadow:0 2px 2px rgba(80,45,13,.35) !important;
+}
+.panel,
+.card,
+.utility-card,
+.entry,
+.level-card,
+.special-card,
+.info,
+.stat,
+.result,
+.rows,
+.output-box,
+.special-result,
+.subblock,
+.modal,
+.preset-item,
+.quick-btn{
+  background-color:#ffffff !important;
+  color:#172231 !important;
+}
+.panel,.card,.utility-card{
+  border-color:#d9e1ea !important;
+}
+.tab{
+  color:#667487 !important;
+  background:#ffffff !important;
+}
+.tab:hover{
+  color:#172231 !important;
+  background:#f7f9fb !important;
+}
+.tab.active{
+  color:#172231 !important;
+  background:#fff8ef !important;
+}
+.top-actions .btn{
+  color:#263445 !important;
+  background:#ffffff !important;
+  border-color:#cfd8e3 !important;
+}
+.top-actions .btn.primary{
+  color:#ffffff !important;
+  background:linear-gradient(145deg,#c58b47,#9c642d) !important;
+  border-color:#99612b !important;
+}
+@media(max-width:720px){
+  .topbar{
+    position:static;
+    align-items:flex-start;
+  }
+  .brand{
+    width:100%;
+  }
+  .logo{
+    width:56px !important;
+    min-width:56px !important;
+    height:56px !important;
+    font-size:18px !important;
+  }
+  .brand h1{
+    font-size:20px !important;
+  }
+  .brand p{
+    font-size:13px !important;
+  }
+}
+
+
+/* ==========================================================
+   BMM v3.0 Official Release — final white distribution build
+   ========================================================== */
+:root{
+  --release-gold:#b8782f;
+  --release-gold-dark:#86501f;
+  --release-gold-soft:#fff6e9;
+  --release-blue:#2d78c8;
+  --release-green:#16845a;
+  --release-ink:#152130;
+  --release-muted:#5a6878;
+}
+body{
+  min-height:100vh;
+}
+.shell{
+  max-width:1520px;
+  padding-bottom:36px;
+}
+.topbar{
+  overflow:visible;
+}
+.brand-copy{
+  min-width:0;
+}
+.brand-title-row{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+}
+.brand-title-row h1{
+  margin:0;
+}
+.release-badge{
+  display:inline-flex;
+  align-items:center;
+  min-height:24px;
+  padding:4px 9px;
+  border:1px solid #e5c692;
+  border-radius:999px;
+  color:#8a571f;
+  background:#fff7e9;
+  font-size:10px;
+  line-height:1;
+  font-weight:900;
+  letter-spacing:.08em;
+  white-space:nowrap;
+}
+.save-indicator{
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+  margin-top:7px;
+  color:#687586;
+  font-size:12px;
+  font-weight:750;
+}
+.save-dot{
+  width:8px;
+  height:8px;
+  border-radius:50%;
+  background:#54b985;
+  box-shadow:0 0 0 4px rgba(84,185,133,.12);
+}
+.save-indicator.saving .save-dot{
+  background:#e2a43c;
+  box-shadow:0 0 0 4px rgba(226,164,60,.13);
+}
+.save-indicator.saved .save-dot{
+  background:#2ea66f;
+  box-shadow:0 0 0 4px rgba(46,166,111,.13);
+}
+.welcome-panel{
+  position:relative;
+  display:grid;
+  grid-template-columns:minmax(0,1.25fr) minmax(420px,.9fr) auto;
+  gap:20px;
+  align-items:center;
+  margin:0 0 18px;
+  padding:20px 22px;
+  border:1px solid #e2d2b9;
+  border-radius:22px;
+  background:
+    radial-gradient(circle at 92% 10%,rgba(209,158,84,.11),transparent 26%),
+    linear-gradient(135deg,#ffffff,#fffaf2);
+  box-shadow:0 12px 30px rgba(64,49,31,.07);
+}
+.welcome-main{
+  display:flex;
+  align-items:center;
+  gap:15px;
+  min-width:0;
+}
+.welcome-mark{
+  width:54px;
+  height:54px;
+  flex:0 0 auto;
+  display:grid;
+  place-items:center;
+  border-radius:15px;
+  color:#fff;
+  background:linear-gradient(145deg,#dcaa5e,#8f5826);
+  font-size:25px;
+  font-weight:900;
+  box-shadow:inset 0 0 0 3px rgba(255,255,255,.17),0 8px 16px rgba(137,82,31,.18);
+}
+.eyebrow{
+  display:block;
+  margin-bottom:4px;
+  color:#a16a2d;
+  font-size:11px;
+  font-weight:900;
+  letter-spacing:.08em;
+}
+.welcome-main h2{
+  margin:0;
+  color:#172231;
+  font-size:21px;
+  line-height:1.35;
+}
+.welcome-main p{
+  margin:6px 0 0;
+  color:#607083;
+  font-size:13px;
+  line-height:1.65;
+}
+.welcome-steps{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:9px;
+}
+.welcome-steps>div{
+  display:flex;
+  align-items:center;
+  gap:9px;
+  min-width:0;
+  padding:11px;
+  border:1px solid #e5eaf0;
+  border-radius:13px;
+  background:rgba(255,255,255,.88);
+}
+.welcome-steps b{
+  width:27px;
+  height:27px;
+  flex:0 0 auto;
+  display:grid;
+  place-items:center;
+  border-radius:9px;
+  color:#956125;
+  background:#fff1d9;
+  font-size:12px;
+}
+.welcome-steps span{
+  min-width:0;
+}
+.welcome-steps strong,
+.welcome-steps small{
+  display:block;
+}
+.welcome-steps strong{
+  color:#263445;
+  font-size:12px;
+}
+.welcome-steps small{
+  margin-top:2px;
+  color:#788596;
+  font-size:10px;
+  line-height:1.35;
+}
+.welcome-close{
+  align-self:start;
+  border:1px solid #d9e1ea;
+  border-radius:10px;
+  padding:8px 10px;
+  color:#5e6c7c;
+  background:#fff;
+  font-size:11px;
+  font-weight:850;
+}
+.welcome-panel.hidden{
+  display:none;
+}
+.panel,
+.card,
+.utility-card{
+  box-shadow:0 13px 32px rgba(31,45,61,.08) !important;
+}
+.card-title{
+  align-items:flex-start;
+}
+.entry{
+  border-left-width:1px;
+}
+.entry::before{
+  width:5px;
+}
+.level-card{
+  background:linear-gradient(180deg,#ffffff,#f8fbfd) !important;
+}
+.level-row h3{
+  color:#263445;
+  font-size:17px;
+}
+input[type="range"]{
+  height:22px;
+}
+.hero{
+  box-shadow:0 17px 38px rgba(123,78,30,.17) !important;
+}
+.hero-label{
+  color:#fff3df;
+}
+.quick-btn{
+  border-color:#d9e2eb;
+}
+.quick-btn:focus-visible,
+.btn:focus-visible,
+.tab:focus-visible,
+.welcome-close:focus-visible{
+  outline:3px solid rgba(45,120,200,.22);
+  outline-offset:2px;
+}
+.card,
+.entry,
+.quick-btn,
+.btn,
+.tab,
+.field input{
+  transition:
+    transform .16s ease,
+    box-shadow .16s ease,
+    border-color .16s ease,
+    background-color .16s ease;
+}
+.field input.invalid-input{
+  border-color:#d84c5a !important;
+  box-shadow:0 0 0 4px rgba(216,76,90,.11) !important;
+}
+.scroll-top{
+  position:fixed;
+  right:22px;
+  bottom:22px;
+  z-index:90;
+  width:46px;
+  height:46px;
+  display:grid;
+  place-items:center;
+  border:1px solid #d3dde7;
+  border-radius:15px;
+  color:#46576b;
+  background:rgba(255,255,255,.96);
+  box-shadow:0 10px 28px rgba(31,45,61,.14);
+  font-size:20px;
+  font-weight:900;
+  opacity:0;
+  pointer-events:none;
+  transform:translateY(10px);
+  transition:opacity .2s ease,transform .2s ease;
+}
+.scroll-top.show{
+  opacity:1;
+  pointer-events:auto;
+  transform:translateY(0);
+}
+.distribution-note{
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  gap:7px;
+  margin-top:8px;
+  color:#798696;
+  font-size:11px;
+}
+.distribution-note span{
+  width:5px;
+  height:5px;
+  border-radius:50%;
+  background:#c48a45;
+}
+@media(max-width:1180px){
+  .welcome-panel{
+    grid-template-columns:1fr auto;
+  }
+  .welcome-steps{
+    grid-column:1/3;
+  }
+}
+@media(max-width:760px){
+  .welcome-panel{
+    grid-template-columns:1fr;
+    padding:17px;
+  }
+  .welcome-steps{
+    grid-column:auto;
+    grid-template-columns:1fr;
+  }
+  .welcome-close{
+    position:absolute;
+    top:12px;
+    right:12px;
+  }
+  .welcome-main{
+    padding-right:72px;
+  }
+  .release-badge{
+    font-size:9px;
+  }
+}
+@media(max-width:520px){
+  .brand-title-row{
+    gap:6px;
+  }
+  .release-badge{
+    width:100%;
+    justify-content:center;
+  }
+  .welcome-main{
+    align-items:flex-start;
+  }
+}
+
+
+/* BMM v3.1 — raw ore block sale system */
+.ore-sale-panel{
+  margin-top:14px;
+  padding:15px;
+  border:1px solid #d9e3ec;
+  border-radius:15px;
+  background:
+    linear-gradient(180deg,#ffffff,#f8fbfd);
+}
+.ore-sale-head{
+  display:flex;
+  align-items:flex-end;
+  justify-content:space-between;
+  gap:16px;
+  margin-bottom:12px;
+}
+.ore-sale-head>div b{
+  display:block;
+  color:#243244;
+  font-size:15px;
+  line-height:1.4;
+}
+.ore-sale-head>div span{
+  display:block;
+  margin-top:4px;
+  color:#647386;
+  font-size:12px;
+  line-height:1.5;
+}
+.sale-mode-select{
+  min-width:230px;
+}
+.sale-mode-select>span{
+  display:block;
+  margin-bottom:5px;
+  color:#526173;
+  font-size:12px;
+  font-weight:800;
+}
+.sale-mode-select select{
+  width:100%;
+  min-height:42px;
+  padding:8px 34px 8px 11px;
+  border:1px solid #cbd6e1;
+  border-radius:11px;
+  color:#172231;
+  background:#fff;
+  font-size:13px;
+  font-weight:800;
+}
+.sale-mode-select select:focus{
+  outline:none;
+  border-color:#2878d0;
+  box-shadow:0 0 0 4px rgba(40,120,208,.13);
+}
+.ore-price-fields{
+  margin-top:0;
+}
+.ore-sale-results{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:9px;
+  margin-top:11px;
+}
+.ore-sale-results>div{
+  padding:11px 12px;
+  border:1px solid #dce4ec;
+  border-radius:12px;
+  background:#fff;
+}
+.ore-sale-results span{
+  display:block;
+  color:#667588;
+  font-size:11px;
+  line-height:1.4;
+}
+.ore-sale-results b{
+  display:block;
+  margin-top:5px;
+  color:#203044;
+  font-size:16px;
+  line-height:1.35;
+}
+.ore-sale-results .recommended-result{
+  border-color:#e2c590;
+  background:#fff8eb;
+}
+.ore-sale-results .recommended-result b{
+  color:#966020;
+}
+@media(max-width:760px){
+  .ore-sale-head{
+    align-items:stretch;
+    flex-direction:column;
+  }
+  .sale-mode-select{
+    min-width:0;
+  }
+  .ore-sale-results{
+    grid-template-columns:1fr;
+  }
+}
+
+
+/* BMM v1.0.1 XP live calculation fix */
+.xp-live-note{
+  margin-top:10px;
+  padding:10px 12px;
+  border:1px solid #3b5870;
+  border-radius:11px;
+  color:#cfe6f8;
+  background:#16283a;
+  font-size:12px;
+  line-height:1.55;
+}
+
+
+
+
+/* BMM v1.0.1 final calculation consistency */
+.ore-sale-head{
+  display:block !important;
+}
+.ore-sale-results{
+  grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+}
+.ore-sale-results>div:first-child{
+  border-color:#8b6838 !important;
+  background:#302518 !important;
+}
+.ore-sale-results>div:first-child span{
+  color:#f0c680 !important;
+}
+.ore-sale-results>div:first-child b{
+  color:#ffd99d !important;
+}
+.ore-sale-results>div:nth-child(2){
+  border-color:#46715e !important;
+  background:#172d25 !important;
+}
+.ore-sale-results>div:nth-child(2) span{
+  color:#9ddcb9 !important;
+}
+.ore-sale-results>div:nth-child(2) b{
+  color:#c8f2da !important;
+}
+.output-box span{
+  display:block;
+  margin-top:5px;
+  color:#b9c9d8 !important;
+  line-height:1.55;
+}
+@media(max-width:760px){
+  .ore-sale-results{
+    grid-template-columns:1fr !important;
+  }
+}
+
+
+/* BMM v1.0.2 measured-default update */
+#measurementStatusText{
+  color:#9fe0bd !important;
+}
+#measurementUpdatedAt{
+  color:#d7e1eb !important;
+}
+.measurement-status>div:first-child{
+  border-color:#3f6f5a !important;
+  background:#172b23 !important;
+}
+
+
+/* ==========================================================
+   BMM v1.1 — Measured Release visual upgrade
+   ========================================================== */
+.measured-release-panel{
+  position:relative;
+  overflow:hidden;
+  margin:16px 0;
+  padding:18px;
+  border:1px solid #3b5064;
+  border-radius:18px;
+  background:
+    radial-gradient(circle at 92% 0%,rgba(224,168,91,.14),transparent 30%),
+    linear-gradient(145deg,#1b2530,#141b23);
+  box-shadow:0 14px 30px rgba(0,0,0,.22);
+}
+.measured-release-panel::before{
+  content:"";
+  position:absolute;
+  inset:0 auto 0 0;
+  width:4px;
+  background:linear-gradient(#e0a85b,#58b98a);
+}
+.measured-release-head{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:14px;
+  margin-bottom:14px;
+}
+.measured-kicker{
+  display:block;
+  margin-bottom:5px;
+  color:#e7b66f;
+  font-size:10px;
+  font-weight:950;
+  letter-spacing:.12em;
+}
+.measured-release-head h3{
+  margin:0;
+  color:#fff !important;
+  font-size:20px;
+  line-height:1.35;
+}
+.measured-release-head p{
+  margin:5px 0 0;
+  color:#b7c4d1 !important;
+  font-size:12px;
+  line-height:1.55;
+}
+.verified-badge{
+  flex:0 0 auto;
+  padding:7px 10px;
+  border:1px solid #477b63;
+  border-radius:999px;
+  color:#9de0bd;
+  background:#183126;
+  font-size:11px;
+  font-weight:900;
+  white-space:nowrap;
+}
+.measured-release-grid{
+  display:grid;
+  grid-template-columns:repeat(5,minmax(0,1fr));
+  gap:10px;
+}
+.measured-chip{
+  min-width:0;
+  padding:13px;
+  border:1px solid #344556;
+  border-radius:14px;
+  background:#111820;
+}
+.measured-chip span,
+.measured-chip b,
+.measured-chip small{
+  display:block;
+}
+.measured-chip span{
+  color:#aebdcb;
+  font-size:11px;
+  font-weight:750;
+}
+.measured-chip b{
+  margin-top:5px;
+  color:#fff;
+  font-size:18px;
+  line-height:1.3;
+}
+.measured-chip small{
+  margin-top:5px;
+  color:#8999aa;
+  font-size:10px;
+  line-height:1.45;
+}
+.copper-chip{border-color:#8b593d;background:#291d18}
+.copper-chip b{color:#ef9b6f}
+.iron-chip{border-color:#5a6571;background:#1f252b}
+.iron-chip b{color:#e3e8ee}
+.gold-chip{border-color:#9b7729;background:#2b2413}
+.gold-chip b{color:#ffd465}
+.xp-chip{border-color:#567a39;background:#1c2b16}
+.xp-chip b{color:#9ee477}
+.smelt-chip{border-color:#3e7188;background:#152731}
+.smelt-chip b{color:#8ed7ef}
+
+.entry{
+  position:relative;
+  overflow:hidden;
+}
+.entry::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  background:linear-gradient(120deg,transparent 72%,rgba(255,255,255,.025));
+}
+.output-box{
+  border-color:#405468 !important;
+  background:linear-gradient(145deg,#18232e,#111820) !important;
+}
+.output-box b{
+  font-size:17px !important;
+}
+.hero{
+  position:relative;
+  overflow:hidden;
+}
+.hero::after{
+  content:"BMM";
+  position:absolute;
+  right:18px;
+  bottom:-18px;
+  color:rgba(255,255,255,.055);
+  font-size:90px;
+  font-weight:950;
+  letter-spacing:-.08em;
+  pointer-events:none;
+}
+.field input{
+  font-variant-numeric:tabular-nums;
+}
+@media(max-width:1150px){
+  .measured-release-grid{
+    grid-template-columns:repeat(3,minmax(0,1fr));
+  }
+}
+@media(max-width:720px){
+  .measured-release-head{
+    flex-direction:column;
+  }
+  .measured-release-grid{
+    grid-template-columns:1fr;
+  }
+  .verified-badge{
+    align-self:flex-start;
+  }
+}
+
+</style>
+<style>
+/* v1.7 visual refinement */
+:root{
+  --panel:#151c25;
+  --panel2:#1a2330;
+  --line:#334252;
+  --accent:#dca44f;
+  --green:#63d89b;
+  --blue:#72b5ff;
+}
+body{
+  background:
+    radial-gradient(circle at 10% 0%,rgba(87,132,174,.13),transparent 27%),
+    radial-gradient(circle at 90% 0%,rgba(220,164,79,.11),transparent 24%),
+    linear-gradient(180deg,#0b1016 0%,#111923 100%);
+}
+.topbar{
+  position:sticky;
+  top:12px;
+  z-index:20;
+  backdrop-filter:blur(14px);
+  background:linear-gradient(180deg,rgba(25,34,45,.94),rgba(16,23,31,.94));
+}
+.logo{
+  background:linear-gradient(145deg,#f0bd68,#6f4825);
+  color:#fff8e9;
+  text-shadow:0 2px 0 rgba(0,0,0,.35);
+}
+.panel,.card{
+  border-color:#334252;
+  background:linear-gradient(180deg,rgba(25,34,45,.98),rgba(16,23,31,.98));
+}
+.entry{
+  position:relative;
+  overflow:hidden;
+  transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease;
+}
+.entry::before{
+  content:"";
+  position:absolute;
+  inset:0 auto 0 0;
+  width:4px;
+  background:linear-gradient(180deg,var(--accent),transparent 85%);
+  opacity:.75;
+}
+.entry:hover{
+  transform:translateY(-2px);
+  border-color:#4d6276;
+  box-shadow:0 10px 24px rgba(0,0,0,.23);
+}
+.item-image,.special-item-image{
+  transition:transform .18s ease,filter .18s ease;
+}
+.entry:hover .item-image,
+.special-card:hover .special-item-image{
+  transform:scale(1.08);
+  filter:drop-shadow(0 5px 7px rgba(0,0,0,.42));
+}
+.field input{
+  transition:border-color .15s ease,background .15s ease,box-shadow .15s ease;
+}
+.field input:hover{
+  border-color:#4c5e70;
+  background:#111922;
+}
+.field input:focus{
+  background:#0d141c;
+}
+.tab{
+  transition:background .18s ease,color .18s ease,border-color .18s ease;
+}
+.tab:hover{
+  color:#fff;
+  background:rgba(255,255,255,.035);
+}
+.hero{
+  position:relative;
+  overflow:hidden;
+  background:
+    radial-gradient(circle at 85% 15%,rgba(255,222,165,.18),transparent 24%),
+    linear-gradient(145deg,#a67538,#68431f);
+}
+.hero::after{
+  content:"";
+  position:absolute;
+  width:190px;height:190px;
+  right:-70px;bottom:-105px;
+  border-radius:50%;
+  border:24px solid rgba(255,255,255,.045);
+}
+.hero-total{
+  text-shadow:0 3px 0 rgba(0,0,0,.22);
+}
+.card-title h2,.section-title{
+  letter-spacing:-.2px;
+}
+.badge{
+  background:linear-gradient(180deg,#2b3949,#202b38);
+}
+.info,.stat,.result,.special-card{
+  transition:transform .18s ease,border-color .18s ease,background .18s ease;
+}
+.info:hover,.stat:hover,.result:hover,.special-card:hover{
+  transform:translateY(-2px);
+  border-color:#4c6175;
+  background:#19232e;
+}
+.special-card{
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.025);
+}
+.ancient-fragment-image{
+  width:58px;
+  height:46px;
+  object-fit:contain;
+}
+.btn{
+  transition:transform .15s ease,filter .15s ease,border-color .15s ease;
+}
+.btn:hover{
+  transform:translateY(-1px);
+  filter:brightness(1.1);
+  border-color:#53687b;
+}
+.result-detail{
+  color:#74dca4;
+}
+.footer{
+  border-top:1px solid rgba(255,255,255,.05);
+  padding-top:14px;
+}
+@media(max-width:680px){
+  .shell{padding:10px}
+  .topbar{position:static}
+  .brand h1{font-size:20px}
+  .logo{width:46px;height:46px;font-size:20px}
+}
+</style>
+
+</head>
+<body>
+<div class="shell">
+<header class="topbar">
+  <div class="brand">
+    <div class="logo" aria-label="BMM 로고">BMM</div>
+    <div class="brand-copy">
+      <div class="brand-title-row">
+        <h1>Block's Mining Manager</h1>
+        <span class="release-badge">MEASURED RELEASE</span>
+      </div>
+      <p>블럭의 채광 관리 사이트 v1.1</p>
+      <div class="save-indicator" id="saveIndicator">
+        <span class="save-dot"></span>
+        <span id="saveIndicatorText">자동 저장 준비됨</span>
+      </div>
+    </div>
+  </div>
+  <div class="top-actions">
+      <button class="btn primary" id="saveBtn">저장</button>
+      <button class="btn" id="copySummaryBtn">결과 복사</button>
+      <button class="btn" id="exportBtn">백업</button>
+      <button class="btn" id="importBtn">불러오기</button>
+      <input id="importFile" type="file" accept=".json,application/json" hidden>
+    </div>
+</header>
+<div class="layout">
+<aside class="panel">
+  <div class="tabs">
+    <button class="tab active" data-tab="items">광물·경험치 병</button>
+    <button class="tab" data-tab="levels">레벨 설정</button>
+    <button class="tab" data-tab="research">실제 측정</button>
+  </div>
+
+  <section class="tabpage active" id="items">
+    <h2 class="section-title">실제 획득량과 현재 시세</h2>
+    <div class="help">수량과 시세를 입력하면 자동 계산됩니다.</div>
+    <div class="stack">
+<div class="entry xpbox">
+        <div class="entry-head"><img class="item-image" src="data:image/png;base64,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" alt="경험치 병"><div><div class="name">경험치 병</div><div class="desc">1셋 64병 · 상자 27셋 · 큰상자 54셋</div></div></div>
+        <div class="subblock">
+          <div class="subblock-title">보유 경험치 병 수량</div>
+          <div class="fields3">
+            <div class="field"><label>셋</label><input id="xpSets" type="number" min="0" step="1" value="0"></div>
+            <div class="field"><label>상자 (27셋)</label><input id="xpChests" type="number" min="0" step="1" value="0"></div>
+            <div class="field"><label>큰상자 (54셋)</label><input id="xpDouble" type="number" min="0" step="1" value="0"></div>
+          </div>
+        </div>
+        <div class="subblock">
+          <div class="subblock-title">경험치 병 시세</div>
+          <div class="fields3">
+            <div class="field"><label>1셋 시세</label><input id="xpSetPrice" type="number" min="0" value="0"></div>
+            <div class="field"><label>상자 시세</label><input id="xpChestPrice" type="number" min="0" value="0"></div>
+            <div class="field"><label>큰상자 시세</label><input id="xpDoublePrice" type="number" min="0" value="0"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="entry">
+        <div class="entry-head"><img class="item-image" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIoAAACWCAYAAAABkxCEAAADLElEQVR4nO3dy0pDSRiF0YrxCnGiIoLv/2YKGYQg4l2jPer53tCFkV5r/FOcwUcNTqVyFmNPLJfLn99+hn/tdrvFbz/Dvjn47QfgbxAKEaEQEQoRoRARChGhEBEKEaEQEQoRoRCZeqbRnN9cX19Xax8c5I0fHh5Wa9/d3VXz/4ezITsKEaEQEQoRoRARChGhEBEKEaEQEQoRoRCpXj23Vyqurq7i2cvLy2bpsVqt4tn7+/tq7dZ6vY5n/+rrfjsKEaEQEQoRoRARChGhEBEKEaEQEQoRoRARCpGpZz23t7fx7Pn5ebP0WC6X8exut6vWfnh4qOYbzbnQGPtzNmRHISIUIkIhIhQiQiEiFCJCISIUIkIhIhQi3V8RlZpX54vFXrypHmP0V0ceHx/j2Zubm2rt9XodH5vMfN1vRyEiFCJCISIUIkIhIhQiQiEiFCJCISIUIkIhsmiuYLTnFM3829tbtXZzjtRe1zg+Pq7mN5tNPNt+6ePj4yOe3W631drN2ZAdhYhQiAiFiFCICIWIUIgIhYhQiAiFiFCIVO+Tv76+qsWb1/LNB6/H6P4V6f39vVr75OSkmm/W//7+rtZ+fX2t5mexoxARChGhEBEKEaEQEQoRoRARChGhEBEKEaEQqc562qsGzVlPe6Wi0Z7dtI6OjuLZn5/qAyXj7OxsyuwYY2y32/hh7ChEhEJEKESEQkQoRIRCRChEhEJEKESEQmTq1zXaf1HaF5+fn9PWnvkVkZlr21GICIWIUIgIhYhQiAiFiFCICIWIUIgIhYhQiFRnPc2XHsbo/sqrvVIx83pH6+XlJZ5t/5qruSIz84zKjkJEKESEQkQoRIRCRChEhEJEKESEQkQoRKrf9zcf0x5jjIuLi+5pCs/Pz/HszGsMY3RfBlkul9XazT80PT09VWv7QDb/OaEQEQoRoRARChGhEBEKEaEQEQoRoRARCpGphyDN2dDp6em051itVtX8ZrOZ9CRzNWc3LTsKEaEQEQoRoRARChGhEBEKEaEQEQoRoRCZe4+h0F4FmWnmq/C/yo5CRChEhEJEKESEQkQoRIRCRChEhEJEKESEQuQfeP6XXILe/YAAAAAASUVORK5CYII=" alt="석탄"><div><div class="name">석탄</div><div class="desc">수량·시세</div></div></div>
+        <div class="fields3">
+          <div class="field"><label>석탄 수량</label><input id="coalQty" type="number" min="0" value="0"></div>
+          <div class="field"><label>석탄 1개 시세</label><input id="coalEach" type="number" min="0" value="0"></div>
+          <div class="field"><label>석탄 1셋 시세</label><input id="coalStack" type="number" min="0" value="0"></div>
+        </div>
+      </div>
+
+      
+      <div class="entry">
+        <div class="entry-head"><img class="item-image" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAKAAAAB4CAYAAAB1ovlvAAACfUlEQVR42u3dsWpTYRjH4UYiVDCLkFEoQgoFMwtmcOpUxy4dhA5degPO3oNrL8HRrYM4OAhdAmKhQhUK7VBoC3UQHPQGOvyH9/CdJs8zfyQ9yY/vg/NymsEKvXKwufGv8vX2Do8Hfb7eB75yBIgAQYAIEASIAEGACBC6NPAR3K16IpGajEelr/f14jZa9/ZTm4mJHRBHMAIEASJAECACBAEiQOjUsO9/YKuJxNaLabTu5PRXtO7H77+l6yaPH0br3sym6SVHn3P1xMQOiCMYAYIAESAIEAGCABEgdCq+q933ZyTWn62Vvm/1hCO+3nDC0ep6q58xsQPiCEaAIEAECAJEgCBABAidGqYTjt3tnegFv3z+GK2rvpOfWrYJx/jp89J162ff0reOurID4ghGgCBABAgCRIAgQAQInYr/O9ZleAd89up16eul0glHqnpykU4aqqWTqerJz9ntHzsgjmAQIAIEASJAECACBAHSXvnvhKR33qsnJn2fSKTXUT3RSSccV+Hk4slo1Q6IIxgEiABBgAgQBIgAQYDcH+WTkPjZgnBi8nL/XbRu8P0oWtfqGYn0GZPqzzmdcFRfx9wOiCMYBIgAQYAIEASIAEGA9MGw1Rund/JnJhx3qn6GY35+E61L/+vV+6OffjEdRzAIEAGCABEgCBABggBpb7h3eBzdsT4IfwF7Mh5Fb1w9kViUCUc6kUhVTy7sgDiCQYAIEASIAEGACBAEyL0SPxMST0w2N6KJycqj7FmF6l9WTyccH04um3whrSYSdkAcwSBABAgCRIAgQAQIAmQhNbvrHk9MQvPr2t/DWLaJhB0QAYIAESAIEAGCABEgCJCF9B8y4q4W7JcMkQAAAABJRU5ErkJggg==" alt="구리"><div><div class="name">구리</div><div class="desc">제련 자동 계산</div></div></div>
+        <div class="fields6">
+          <div class="field"><label>구리 원석 블록 수량 (셋)</label><input id="copperSets" type="number" min="0" value="0"></div>
+          <div class="field"><label>구리 원석 블록 수량 (9셋 한 줄)</label><input id="copperRows" type="number" min="0" value="0"></div>
+          <div class="field"><label>구리 원석 블록 수량 (54셋 큰상자)</label><input id="copperDouble" type="number" min="0" value="0"></div>
+          <div class="field"><label>구리 블록 1개 시세</label><input id="copperEach" type="number" min="0" value="0"></div>
+          <div class="field"><label>구리 블록 1셋 시세</label><input id="copperStack" type="number" min="0" value="0"></div>
+          <div class="output-box">현재 제련 결과<b id="copperOutput">0블록 · 0셋</b><span id="copperXpOutput">경험치 병 0셋</span></div>
+        </div>
+      
+        <div class="ore-sale-panel">
+          <div class="ore-sale-head">
+            <div>
+              <b>구리 원석 블록 그대로 판매</b>
+              <span>제련하지 않고 원석 블록 상태로 판매할 때 사용합니다.</span>
+            </div>
+          </div>
+          <div class="fields3 ore-price-fields">
+            <div class="field"><label>구리 원석 블록 시세 (1셋)</label><input id="copperRawSetPrice" type="number" min="0" value="0"></div>
+            <div class="field"><label>구리 원석 블록 시세 (9셋 한 줄)</label><input id="copperRawRowPrice" type="number" min="0" value="0"></div>
+            <div class="field"><label>구리 원석 블록 시세 (54셋 큰상자)</label><input id="copperRawDoublePrice" type="number" min="0" value="0"></div>
+          </div>
+          <div class="ore-sale-results">
+            <div><span>원석 그대로 판매가</span><b id="copperRawRevenue">0원</b></div>
+            <div><span>제련 후 판매가 · 경험치 병 설정 반영</span><b id="copperSmeltRevenue">0원</b></div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="entry">
+        <div class="entry-head"><img class="item-image" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAKAAAAB4CAYAAAB1ovlvAAACJklEQVR42u3dsY3iQBiG4fNpI0qwHCJqIHQRdEEJJBSBuyBGIkGICFECIkSUQHrbwAWfdIPG532eeGSMeTUj8WuX5hejsl6v/5S83jAMzZjf728fOQJEgCBABAgCRIAgQAQIn/TlEfxd6YlEqu/7otdr2zZ6H5vNpsrExA6IIxgBggARIAgQAYIAESB8VDP2Gxz7RKLrulE/v+fzGa273+/RutITEzsgjmAECAJEgCBABAgCRIDwUfG32iYS01ZrYmIHxBGMAEGACBAEiABBgAgQPqpJJxy73S664PV69VRHZLlcFr1e+vmeTic7II5gECACBAEiQBAgAgQBUl/8OyH7/T5at1qtonU/bWJSeiKRSp/z+XyO1s3n82jd5XKxA+IIBgEiQBAgAgQBIkAQIPUV/8X0sU9Mxj6RuN1u0br3+130/mazmR0QRzAIEAGCABEgCBABggCZnq9aL1x6YpIa+0SitPRvOOyAOIJBgAgQBIgAQYAIEATIJMWTkNfrFa1r27boDZpc/Jv0czscDkVf93g8+sV0HMEgQAQIAkSAIEAECAKkviZdmP6y+mKxiK6XTky6rovWTeW/SpWeSKTSyYUdEEcwCBABggARIAgQAYIA+a/EfxMyDEP0TXk6MUmlk5BU3/fRuu12W+UDqTWRsAPiCAYBIkAQIAIEASJAECCTVO1b99ITk8fjUfT+ftpEwg6IAEGACBAEiABBgAgQBMgkfQMFyX8Mb2ZzwwAAAABJRU5ErkJggg==" alt="철"><div><div class="name">철</div><div class="desc">제련 자동 계산</div></div></div>
+        <div class="fields6">
+          <div class="field"><label>철 원석 블록 수량 (셋)</label><input id="ironSets" type="number" min="0" value="0"></div>
+          <div class="field"><label>철 원석 블록 수량 (9셋 한 줄)</label><input id="ironRows" type="number" min="0" value="0"></div>
+          <div class="field"><label>철 원석 블록 수량 (54셋 큰상자)</label><input id="ironDouble" type="number" min="0" value="0"></div>
+          <div class="field"><label>철 블록 1개 시세</label><input id="ironEach" type="number" min="0" value="0"></div>
+          <div class="field"><label>철 블록 1셋 시세</label><input id="ironStack" type="number" min="0" value="0"></div>
+          <div class="output-box">현재 제련 결과<b id="ironOutput">0블록 · 0셋</b><span id="ironXpOutput">경험치 병 0셋</span></div>
+        </div>
+      
+        <div class="ore-sale-panel">
+          <div class="ore-sale-head">
+            <div>
+              <b>철 원석 블록 그대로 판매</b>
+              <span>제련하지 않고 원석 블록 상태로 판매할 때 사용합니다.</span>
+            </div>
+          </div>
+          <div class="fields3 ore-price-fields">
+            <div class="field"><label>철 원석 블록 시세 (1셋)</label><input id="ironRawSetPrice" type="number" min="0" value="0"></div>
+            <div class="field"><label>철 원석 블록 시세 (9셋 한 줄)</label><input id="ironRawRowPrice" type="number" min="0" value="0"></div>
+            <div class="field"><label>철 원석 블록 시세 (54셋 큰상자)</label><input id="ironRawDoublePrice" type="number" min="0" value="0"></div>
+          </div>
+          <div class="ore-sale-results">
+            <div><span>원석 그대로 판매가</span><b id="ironRawRevenue">0원</b></div>
+            <div><span>제련 후 판매가 · 경험치 병 설정 반영</span><b id="ironSmeltRevenue">0원</b></div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="entry">
+        <div class="entry-head"><img class="item-image" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAKAAAAB4CAYAAAB1ovlvAAACWklEQVR42u3dv0tVYRzH8Xv1Bi4NQk1BThLNItLWGIp36C9wcHIRWhQcxFkXFyFwif6DS4pDm0JDQ6viEA5NKpcIIohO/gOCH/C5nOO9r9f8cH++eR44Xw6n3aJResuT/0u+Xne/327y9x3zlyNABAgCRIAgQAQIAkSAMEgdP8HtSk8kUm/evSr7PVpfou9R18TEDogjGAGCABEgCBABggARIAxUu+kfsK6JxMJud6RCOFjtRetKT0zsgDiCESAIEAGCABEgCBABwkDFV7Wbfo/E+NRT/+Y9/Lu4jNZtvD2K1m2fVlFbdkAcwQgQBIgAQYAIEASIAGGg2umEY/H9t+gFqz+bftUm7TATW0VfL/1/12c+2gFxBIMAESAIEAGCABEgCJD6xc8J+Xu2Eq179GIvWjdqE5PSE4lU+jt///ApWvf89ZwdEEcwCBABggARIAgQAYIAeTiKPzE9vfKeTgZKT0yaPpG4+nwYrfv1o7IDggARIAgQAYIAESAIEAHCXTp1vXF8j8nLg+wFq4ts2YhNJB4/y/aYyelZOyCOYBAgAgQBIkAQIAIEATJ84klI//xrtO7J1HzRD1j9XorWmVzcT/ok9JQnpuMIBgEiQBAgAgQBIkAQII3Q6e73oyvWvVb2ZPW5VjaRqOsehNLSyUVqZ+06XFnP5MIOiCMYBIgAQYAIEASIAEGAPCjFr373lsOJyWJ2O0o6MUnvWUnlE4my6ppI2AFxBIMAESAIEAGCABEgCJChVNtV93Rikjo++Vn0843aRMIOiABBgAgQBIgAQYAIEATIULoBrxl4Y0YlV1sAAAAASUVORK5CYII=" alt="금"><div><div class="name">금</div><div class="desc">제련 자동 계산</div></div></div>
+        <div class="fields6">
+          <div class="field"><label>금 원석 블록 수량 (셋)</label><input id="goldSets" type="number" min="0" value="0"></div>
+          <div class="field"><label>금 원석 블록 수량 (9셋 한 줄)</label><input id="goldRows" type="number" min="0" value="0"></div>
+          <div class="field"><label>금 원석 블록 수량 (54셋 큰상자)</label><input id="goldDouble" type="number" min="0" value="0"></div>
+          <div class="field"><label>금 블록 1개 시세</label><input id="goldEach" type="number" min="0" value="0"></div>
+          <div class="field"><label>금 블록 1셋 시세</label><input id="goldStack" type="number" min="0" value="0"></div>
+          <div class="output-box">현재 제련 결과<b id="goldOutput">0블록 · 0셋</b><span id="goldXpOutput">경험치 병 0셋</span></div>
+        </div>
+      
+        <div class="ore-sale-panel">
+          <div class="ore-sale-head">
+            <div>
+              <b>금 원석 블록 그대로 판매</b>
+              <span>제련하지 않고 원석 블록 상태로 판매할 때 사용합니다.</span>
+            </div>
+          </div>
+          <div class="fields3 ore-price-fields">
+            <div class="field"><label>금 원석 블록 시세 (1셋)</label><input id="goldRawSetPrice" type="number" min="0" value="0"></div>
+            <div class="field"><label>금 원석 블록 시세 (9셋 한 줄)</label><input id="goldRawRowPrice" type="number" min="0" value="0"></div>
+            <div class="field"><label>금 원석 블록 시세 (54셋 큰상자)</label><input id="goldRawDoublePrice" type="number" min="0" value="0"></div>
+          </div>
+          <div class="ore-sale-results">
+            <div><span>원석 그대로 판매가</span><b id="goldRawRevenue">0원</b></div>
+            <div><span>제련 후 판매가 · 경험치 병 설정 반영</span><b id="goldSmeltRevenue">0원</b></div>
+          </div>
+        </div>
+      </div>
+      
+
+      <div class="entry">
+        <div class="entry-head"><img class="item-image" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGQAAAB4CAYAAAAE9le0AAABz0lEQVR42u3dsUqCURiA4WN0A0EhNHUBNQV1D02CQ3MOEXQPDdHUHtTi7FDQHbgHDaEUFIQ0BH8GLS0NVrfwDQfPz+/zzoej+XAOfInaSqXqpr9U525Sq8TDLiXVKiBABASIgAARECCad8ulJvCX62lou8Pvq6xP7/HjNbSuSv3YfxIyT/ROiCtLQIAICBABASIgJvUyE/j4963IH1zd34XWtc97sf2egxP9KDbROyGuLAEBIiBABASIgCz8pN6QCbzYRH8bnOg7sYneCXFlCQgQAQEiIEAEZOEn9WDRCfxocpH1CV5uHGfdb5gGsYXTWdaJ3glxZQkIEAEBIiACAkR5J/W6N/qZ5N3w/Su2bm3VCXFlCQgQAREQIAICRECACAgQAREQIAICRECaWe3fU8/+Xnnm2ts7oXVVGjshriwBASIgQAREQICoAZN6tOHsKbbw4TO2bn3FCREQIAICRECACAgQzb/4b4EHvyM+7W/G9gt+Y1v48+LRghP46cFZaN3Jbjf2uH6lzZUlIEAEBIiACAgQ5Z3UGzLRt3t7oXVVp591AndCXFkCAkRAgAiIgABRoUk92lZwoi/VqMxr44S4sgQEiIAAERAgArLg/QMt1Vc7xj7dFAAAAABJRU5ErkJggg==" alt="에메랄드"><div><div class="name">에메랄드</div><div class="desc">수량·시세</div></div></div>
+        <div class="fields3">
+          <div class="field"><label>에메랄드 블록 수량</label><input id="emeraldQty" type="number" min="0" value="0"></div>
+          <div class="field"><label>에메랄드 블록 1개 시세</label><input id="emeraldEach" type="number" min="0" value="0"></div>
+          <div class="field"><label>에메랄드 블록 1셋 시세</label><input id="emeraldStack" type="number" min="0" value="0"></div>
+        </div>
+      </div>
+
+      <div class="entry">
+        <div class="entry-head"><img class="item-image" src="data:image/png;base64,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" alt="다이아몬드"><div><div class="name">다이아몬드</div><div class="desc">수량·시세</div></div></div>
+        <div class="fields3">
+          <div class="field"><label>다이아몬드 수량</label><input id="diamondQty" type="number" min="0" value="0"></div>
+          <div class="field"><label>다이아 1개 시세</label><input id="diamondEach" type="number" min="0" value="0"></div>
+          <div class="field"><label>다이아 1셋 시세</label><input id="diamondStack" type="number" min="0" value="0"></div>
+        </div>
+      </div>
+
+      
+
+    </div>
+  </section>
+
+  <section class="tabpage" id="levels">
+    <h2 class="section-title">mcmmo 레벨 설정</h2>
+    <div class="help">채광 레벨을 입력하세요.</div>
+    <div class="level-card">
+      <div class="level-row"><h3>채광 레벨</h3><input id="miningInput" class="level-number" type="number" min="0" max="2000" value="0"></div>
+      <input id="miningRange" type="range" min="0" max="2000" value="0"><div class="scale"><span>0</span><span>2000</span></div>
+      <div style="height:18px"></div>
+      <div class="level-row"><h3>제련 레벨</h3><input id="smeltingDisplay" class="level-number" type="number" value="0" disabled></div>
+      <input id="smeltingRange" type="range" min="0" max="1000" value="0" disabled><div class="scale"><span>0</span><span>1000</span></div>
+      <div class="stat-grid">
+        <div class="stat"><span>채광 능력 적용</span><b id="miningApplied">0</b></div>
+        <div class="stat"><span>제련 능력 적용</span><b id="smeltingApplied">0</b></div>
+        <div class="stat"><span>더블 제련 확률</span><b id="doubleSmeltChance">0.000%</b></div>
+        <div class="stat"><span>바닐라 XP 배수</span><b id="xpMultStat">1배</b></div>
+        <div class="stat"><span>연료 효율</span><b id="fuelStat">1배</b></div>
+        <div class="stat"><span>슈퍼 브레이커</span><b id="superStat">0초</b></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="tabpage" id="research">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px">
+      <h2 class="section-title" style="margin:0">제련 실제 측정 데이터</h2>
+      <span class="badge">2026-08 실측 반영</span>
+      <button class="btn" id="measurementLockBtn" type="button">관리자 잠금 해제</button>
+    </div>
+    <div id="measurementLockNotice" class="note">관리자 전용</div>
+    <div class="measured-release-panel">
+        <div class="measured-release-head">
+          <div>
+            <span class="measured-kicker">SERVER MEASURED DATA</span>
+            <h3>플래닛어스 실제 측정 기준</h3>
+            <p>직접 제련하고 경험치 병으로 환전해 확인한 기본값입니다.</p>
+          </div>
+          <span class="verified-badge">실측 적용 완료</span>
+        </div>
+        <div class="measured-release-grid">
+          <div class="measured-chip copper-chip">
+            <span>구리 기본 경험치</span>
+            <b>0.7 EXP</b>
+            <small>원석 블록 1셋 → 경병 약 5셋</small>
+          </div>
+          <div class="measured-chip iron-chip">
+            <span>철 기본 경험치</span>
+            <b>1.2 EXP</b>
+            <small>원석 블록 1셋 → 경병 약 8셋 43개</small>
+          </div>
+          <div class="measured-chip gold-chip">
+            <span>금 기본 경험치</span>
+            <b>1.8 EXP</b>
+            <small>원석 블록 1셋 → 경병 약 13셋</small>
+          </div>
+          <div class="measured-chip xp-chip">
+            <span>경험치 병 제작 비용</span>
+            <b>10 EXP</b>
+            <small>경험치 병 1개 기준</small>
+          </div>
+          <div class="measured-chip smelt-chip">
+            <span>제련 결과 배율</span>
+            <b>약 1.411배</b>
+            <small>구리 576개 → 약 813개 실측</small>
+          </div>
+        </div>
+      </div>
+
+      <div class="measurement-status">
+      <div><span>적용 중인 실제 측정 데이터</span><b id="measurementStatusText">기본 실측값 사용 중</b></div>
+      <div><span>마지막 저장</span><b id="measurementUpdatedAt">저장 기록 없음</b></div>
+    </div>
+    <div class="help" style="margin:0 0 10px">서버에서 직접 확인한 값을 기본으로 적용합니다. 구리 제련 결과 약 1.411배, 경험치 병 1개당 10 EXP, 구리 0.7 · 철 1.2 · 금 1.8 EXP 기준입니다. 이 화면에서 수정한 값은 현재 브라우저에만 저장됩니다.</div>
+    <div class="measurement-actions">
+      <button class="btn" id="saveMeasurementBtn" type="button" disabled>실제 측정 저장</button>
+      <button class="btn" id="resetMeasurementBtn" type="button" disabled>기본값 복원</button>
+    </div>
+    <div class="fields3">
+      <div class="field"><label>투입 구리 원석</label><input id="sampleInput" class="measurement-input" type="number" min="1" value="576"></div>
+      <div class="field"><label>실제 획득 구리괴</label><input id="sampleOutput" class="measurement-input" type="number" min="1" value="813"></div>
+      <div class="field"><label>경험치 병 1개 제작 EXP</label><input id="xpCostPerBottle" class="measurement-input" type="number" min="1" value="10"></div>
+    </div>
+    <div class="subblock">
+      <div class="subblock-title">광물별 바닐라 제련 XP</div>
+      <div class="fields3">
+        <div class="field"><label>철 1개당 XP</label><input id="ironXp" class="measurement-input" type="number" min="0" step="0.1" value="1.2"></div>
+        <div class="field"><label>금 1개당 XP</label><input id="goldXp" class="measurement-input" type="number" min="0" step="0.1" value="1.8"></div>
+        <div class="field"><label>구리 1개당 XP</label><input id="copperXp" class="measurement-input" type="number" min="0" step="0.1" value="0.7"></div>
+      </div>
+    </div>
+  </section>
+</aside>
+
+<main class="main">
+  <section class="hero">
+    <div class="hero-label">광물과 보유 경험치 병의 예상 총 판매가</div>
+    <div class="hero-total"><span id="grandTotal">0</span>원</div>
+    <div class="hero-grid">
+      <div class="hero-stat"><span>입력 채광 레벨</span><b id="heroMining">0</b></div>
+      <div class="hero-stat"><span>채광 능력 적용</span><b id="heroMiningApplied">0</b></div>
+      <div class="hero-stat"><span>자동 제련 레벨</span><b id="heroSmelting">0</b></div>
+      <div class="hero-stat"><span>현재 제련 배율</span><b id="heroSmeltMult">1.000배</b></div>
+    </div>
+  </section>
+
+  <section class="utility-card">
+    <div class="quick-actions">
+      <button class="quick-btn" id="resetQuantitiesBtn">
+        <span class="quick-icon">↺</span>
+        <span><b>수량 초기화</b><small>시세와 레벨은 유지</small></span>
+      </button>
+      <button class="quick-btn" id="resetPricesBtn">
+        <span class="quick-icon">₩</span>
+        <span><b>시세 초기화</b><small>수량과 측정값은 유지</small></span>
+      </button>
+      <button class="quick-btn" id="savePresetBtn">
+        <span class="quick-icon">★</span>
+        <span><b>시세 프리셋 저장</b><small>현재 시세를 이름으로 보관</small></span>
+      </button>
+      <button class="quick-btn" id="loadPresetBtn">
+        <span class="quick-icon">▣</span>
+        <span><b>프리셋 불러오기</b><small id="presetCountText">저장된 프리셋 0개</small></span>
+      </button>
+      <button class="quick-btn danger-soft" id="resetBtn">
+        <span class="quick-icon">×</span>
+        <span><b>전체 초기화</b><small>모든 개인 입력값 삭제</small></span>
+      </button>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="card-title"><h2>제련 경험치 → 경험치 병 환산</h2><span class="badge">1병 = 9 EXP</span></div>
+    <div class="info-grid">
+      <div class="info"><span>예상 제련 경험치</span><b id="xpSummaryTotal">0 EXP</b></div>
+      <div class="info"><span>경험치 병</span><b id="xpSummaryBottles">0병</b></div>
+      <div class="info"><span>셋</span><b id="xpSummarySets">0셋</b></div>
+      <div class="info"><span>상자 / 큰상자</span><b id="xpSummaryContainers">0 / 0</b></div>
+    </div>
+    <div class="row" style="margin-top:12px"><span>제련 경험치 병 판매가를 총합에 포함</span><input id="includeSmeltingXpRevenue" type="checkbox" checked></div>
+    <div class="row"><span>제련 경험치 병 예상 판매가</span><b id="smeltingXpRevenue">0원</b></div>
+    <div class="row"><span>총 판매가 반영 상태</span><b id="smeltingXpRevenueStatus" class="ok">자동 포함</b></div>
+    <div class="xp-live-note">
+      제련 경험치 병의 계산값은 항상 표시되며, 체크한 경우에만 전체 총 판매가에 한 번 포함됩니다.
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="card-title"><h2>예상 판매 결과</h2></div>
+    <div class="result-grid" id="results"></div>
+  </section>
+
+  <section class="card analytics-card">
+    <div class="card-title">
+      <div>
+        <h2>수익 분석</h2>
+        <p class="card-subtitle">판매가가 높은 항목을 자동으로 정리합니다.</p>
+      </div>
+      <span class="badge" id="activeRevenueCount">0개 항목</span>
+    </div>
+    <div class="analytics-layout">
+      <div class="ranking-list" id="revenueRanking">
+        <div class="empty-state">수량과 시세를 입력하면 수익 순위가 표시됩니다.</div>
+      </div>
+      <div class="summary-panel">
+        <div class="summary-metric">
+          <span>가장 높은 수익</span>
+          <b id="topRevenueName">-</b>
+          <strong id="topRevenueValue">0원</strong>
+        </div>
+        <div class="summary-metric">
+          <span>제련 경험치 병</span>
+          <b id="analysisXpBottles">0병</b>
+          <strong id="analysisXpValue">0원</strong>
+        </div>
+        <div class="summary-metric">
+          <span>희귀 아이템 수익</span>
+          <b>고대잔해 · 샤드</b>
+          <strong id="rareRevenueValue">0원</strong>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="card-title"><h2>추가 채광 아이템</h2><span class="badge">희귀 채광 아이템</span></div>
+    <div class="special-grid">
+      <div class="special-card">
+        <div class="special-head">
+          <img class="special-item-image ancient-fragment-image" src="data:image/png;base64,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" alt="고대잔해 조각">
+          <div><div class="special-name">고대잔해 조각</div><div class="special-desc">조각 8개를 고대잔해 1개로 교환</div></div>
+        </div>
+        <div class="special-fields">
+          <div class="field"><label>고대잔해 조각 수량</label><input id="ancientFragmentQty" type="number" min="0" value="0"></div>
+          <div class="field"><label>고대잔해 1개 시세</label><input id="ancientDebrisPrice" type="number" min="0" value="0"></div>
+        </div>
+        <div class="special-result">교환 가능: <b id="ancientDebrisResult">0개</b><br>남는 조각: <b id="ancientFragmentRemain">0개</b><br>예상 판매가: <b id="ancientRevenue">0원</b></div>
+      </div>
+
+      <div class="special-card shard-card">
+        <div class="special-head">
+          <img class="special-item-image" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAHoAAAB6CAYAAABwWUfkAAAC9ElEQVR42u3du2/NYRjA8XNOT6kQFZe0i0RiIgY0QcWlIWKoWISFwSDCwGgUMfIHuEsXg0pHJnGLEHFvEAbVRaKucarautXM8jzkpzmRz2d+8v5+7dfb4c17jnIpafPxQ2PRzI8fI+E6Pbv2l0uMu4pfgdAIjdAIjdAIjdAIza+q2cHMqdeGtuXxQkcPjhX18k7Z7GiEFhqhERqhERqh+RfKaw/sTR1gbOvcGM70v3sVzsyZ0VrYy1+4f6+wtc7t3Fe2oxEaoREaoREaoRGaUqlUSh8SZA5W1nesC9cZGvmYet73r/HMrOamcGbqpGmp553qPhvOtMydnVqrHm++2NH+dCM0QiM0QiM0QiM0v6kWudjEymg4U/uaW2u4MiGcef85/jzY7d4buX/xiQtVnYvbc2slvsEpo8jrTXa0P90IjdAIjdAIjdDkFXrlJXPdaMWyJam13o7EZw4zm+LXv3zxWup527dsDmf6BgZSa2WuOGVcf9qXmuu7/9CORmihERqhERqhEZoCFXrDZHRoOJxJf1lN4otvJjc1hzObNnamHvf4zYfEtpiQWitz8+VRf3wY8vzOo9TzHpzsLtvRCC00QiM0QiM0QiM0f6jQk7Hrh0+EJzQTJ09KfS6pc/WacGZotBbODHxrTL37lIYv8S+rnLt59S3xE1YqTXY0QiM0QiO00AiN0NSp6ng/8P3L16m581cvhTPtbfHnuBa0Tk89rzY8FL/758HUWplrQv0Pn4UzmStCdjRCC43QCI3QCI3QCM1fqtv/BX3pnu3hhZxVK+OvVf5Y+5R6Xt+L+DSreXZLaq3MqdfdI2fKdjRCIzRCI7TQCI3Q1Kdqvb7Y8GB8befek8fhTEf70tTzFs2fF84cO92VWqvIK0B2NEIjtNAIjdAIjdCMv7o9MOnt6gkPHdp2bw1voVy5eSv1vGmtM8OZhsZGOxqhERqhERqhEVpohOZ/Uf7ff8CFO7aMFbVWPV4RsqMRWmiERmiERmiEpng/AdQUmFN3IZOEAAAAAElFTkSuQmCC" alt="샤드">
+          <div>
+            <div class="special-name">샤드</div>
+          </div>
+        </div>
+        <div class="special-fields">
+          <div class="field">
+            <label>샤드 수량</label>
+            <input id="shardQty" type="number" min="0" value="0">
+          </div>
+          <div class="field">
+            <label>샤드 1개 시세</label>
+            <input id="shardEach" type="number" min="0" value="0">
+          </div>
+          <div class="field">
+            <label>샤드 1셋 시세</label>
+            <input id="shardStack" type="number" min="0" value="0">
+          </div>
+        </div>
+        <div class="special-result">
+          <span>예상 판매가</span>
+          <b id="shardRevenue">0원</b>
+        </div>
+      </div>
+        </div>
+      </div>
+
+      
+    </div>
+    <div class="help" style="margin-top:12px;margin-bottom:0">고대잔해 조각과 샤드의 수량·시세를 계산합니다.</div>
+  </section>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<div class="modal-backdrop" id="presetModal" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="presetModalTitle">
+    <div class="modal-head">
+      <div>
+        <h3 id="presetModalTitle">시세 프리셋</h3>
+        <p>저장한 시세를 선택해 적용할 수 있습니다.</p>
+      </div>
+      <button class="icon-btn" id="closePresetModal" aria-label="닫기">×</button>
+    </div>
+    <div class="preset-list" id="presetList"></div>
+  </div>
+</div>
+<button class="scroll-top" id="scrollTopBtn" type="button" aria-label="맨 위로 이동">↑</button>
+  <div class="footer">Block's Mining Manager v1.1 · Measured Release · 구리 0.7 / 철 1.2 / 금 1.8 EXP</div>
+  <div class="distribution-note"><span></span>모든 개인 입력 데이터는 현재 브라우저에 자동 저장됩니다.<span></span></div>
+</main>
+</div>
+</div>
+
+<script>
+(() => {
+"use strict";
+const $=id=>document.getElementById(id), $$=s=>Array.from(document.querySelectorAll(s));
+const STORE="bmmV110_measured_release";
+const items={
+ coal:{name:"석탄",img:"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIoAAACWCAYAAAABkxCEAAADLElEQVR4nO3dy0pDSRiF0YrxCnGiIoLv/2YKGYQg4l2jPer53tCFkV5r/FOcwUcNTqVyFmNPLJfLn99+hn/tdrvFbz/Dvjn47QfgbxAKEaEQEQoRoRARChGhEBEKEaEQEQoRoRCZeqbRnN9cX19Xax8c5I0fHh5Wa9/d3VXz/4ezITsKEaEQEQoRoRARChGhEBEKEaEQEQoRoRCpXj23Vyqurq7i2cvLy2bpsVqt4tn7+/tq7dZ6vY5n/+rrfjsKEaEQEQoRoRARChGhEBEKEaEQEQoRoRARCpGpZz23t7fx7Pn5ebP0WC6X8exut6vWfnh4qOYbzbnQGPtzNmRHISIUIkIhIhQiQiEiFCJCISIUIkIhIhQi3V8RlZpX54vFXrypHmP0V0ceHx/j2Zubm2rt9XodH5vMfN1vRyEiFCJCISIUIkIhIhQiQiEiFCJCISIUIkIhsmiuYLTnFM3829tbtXZzjtRe1zg+Pq7mN5tNPNt+6ePj4yOe3W631drN2ZAdhYhQiAiFiFCICIWIUIgIhYhQiAiFiFCIVO+Tv76+qsWb1/LNB6/H6P4V6f39vVr75OSkmm/W//7+rtZ+fX2t5mexoxARChGhEBEKEaEQEQoRoRARChGhEBEKEaEQqc562qsGzVlPe6Wi0Z7dtI6OjuLZn5/qAyXj7OxsyuwYY2y32/hh7ChEhEJEKESEQkQoRIRCRChEhEJEKESEQmTq1zXaf1HaF5+fn9PWnvkVkZlr21GICIWIUIgIhYhQiAiFiFCICIWIUIgIhYhQiFRnPc2XHsbo/sqrvVIx83pH6+XlJZ5t/5qruSIz84zKjkJEKESEQkQoRIRCRChEhEJEKESEQkQoRKrf9zcf0x5jjIuLi+5pCs/Pz/HszGsMY3RfBlkul9XazT80PT09VWv7QDb/OaEQEQoRoRARChGhEBEKEaEQEQoRoRARCpGphyDN2dDp6em051itVtX8ZrOZ9CRzNWc3LTsKEaEQEQoRoRARChGhEBEKEaEQEQoRoRCZe4+h0F4FmWnmq/C/yo5CRChEhEJEKESEQkQoRIRCRChEhEJEKESEQuQfeP6XXILe/YAAAAAASUVORK5CYII=",smelt:false,unit:"개"},
+ copper:{name:"구리 블록",img:"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAKAAAAB4CAYAAAB1ovlvAAACfUlEQVR42u3dsWpTYRjH4UYiVDCLkFEoQgoFMwtmcOpUxy4dhA5degPO3oNrL8HRrYM4OAhdAmKhQhUK7VBoC3UQHPQGOvyH9/CdJs8zfyQ9yY/vg/NymsEKvXKwufGv8vX2Do8Hfb7eB75yBIgAQYAIEASIAEGACBC6NPAR3K16IpGajEelr/f14jZa9/ZTm4mJHRBHMAIEASJAECACBAEiQOjUsO9/YKuJxNaLabTu5PRXtO7H77+l6yaPH0br3sym6SVHn3P1xMQOiCMYAYIAESAIEAGCABEgdCq+q933ZyTWn62Vvm/1hCO+3nDC0ep6q58xsQPiCEaAIEAECAJEgCBABAidGqYTjt3tnegFv3z+GK2rvpOfWrYJx/jp89J162ff0reOurID4ghGgCBABAgCRIAgQAQInYr/O9ZleAd89up16eul0glHqnpykU4aqqWTqerJz9ntHzsgjmAQIAIEASJAECACBAHSXvnvhKR33qsnJn2fSKTXUT3RSSccV+Hk4slo1Q6IIxgEiABBgAgQBIgAQYDcH+WTkPjZgnBi8nL/XbRu8P0oWtfqGYn0GZPqzzmdcFRfx9wOiCMYBIgAQYAIEASIAEGA9MGw1Rund/JnJhx3qn6GY35+E61L/+vV+6OffjEdRzAIEAGCABEgCBABggBpb7h3eBzdsT4IfwF7Mh5Fb1w9kViUCUc6kUhVTy7sgDiCQYAIEASIAEGACBAEyL0SPxMST0w2N6KJycqj7FmF6l9WTyccH04um3whrSYSdkAcwSBABAgCRIAgQAQIAmQhNbvrHk9MQvPr2t/DWLaJhB0QAYIAESAIEAGCABEgCJCF9B8y4q4W7JcMkQAAAABJRU5ErkJggg==",smelt:true,unit:"블록"},
+ iron:{name:"철 블록",img:"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAKAAAAB4CAYAAAB1ovlvAAACJklEQVR42u3dsY3iQBiG4fNpI0qwHCJqIHQRdEEJJBSBuyBGIkGICFECIkSUQHrbwAWfdIPG532eeGSMeTUj8WuX5hejsl6v/5S83jAMzZjf728fOQJEgCBABAgCRIAgQAQIn/TlEfxd6YlEqu/7otdr2zZ6H5vNpsrExA6IIxgBggARIAgQAYIAESB8VDP2Gxz7RKLrulE/v+fzGa273+/RutITEzsgjmAECAJEgCBABAgCRIDwUfG32iYS01ZrYmIHxBGMAEGACBAEiABBgAgQPqpJJxy73S664PV69VRHZLlcFr1e+vmeTic7II5gECACBAEiQBAgAgQBUl/8OyH7/T5at1qtonU/bWJSeiKRSp/z+XyO1s3n82jd5XKxA+IIBgEiQBAgAgQBIkAQIPUV/8X0sU9Mxj6RuN1u0br3+130/mazmR0QRzAIEAGCABEgCBABggCZnq9aL1x6YpIa+0SitPRvOOyAOIJBgAgQBIgAQYAIEATIJMWTkNfrFa1r27boDZpc/Jv0czscDkVf93g8+sV0HMEgQAQIAkSAIEAECAKkviZdmP6y+mKxiK6XTky6rovWTeW/SpWeSKTSyYUdEEcwCBABggARIAgQAYIA+a/EfxMyDEP0TXk6MUmlk5BU3/fRuu12W+UDqTWRsAPiCAYBIkAQIAIEASJAECCTVO1b99ITk8fjUfT+ftpEwg6IAEGACBAEiABBgAgQBMgkfQMFyX8Mb2ZzwwAAAABJRU5ErkJggg==",smelt:true,unit:"블록"},
+ gold:{name:"금 블록",img:"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAKAAAAB4CAYAAAB1ovlvAAACWklEQVR42u3dv0tVYRzH8Xv1Bi4NQk1BThLNItLWGIp36C9wcHIRWhQcxFkXFyFwif6DS4pDm0JDQ6viEA5NKpcIIohO/gOCH/C5nOO9r9f8cH++eR44Xw6n3aJResuT/0u+Xne/327y9x3zlyNABAgCRIAgQAQIAkSAMEgdP8HtSk8kUm/evSr7PVpfou9R18TEDogjGAGCABEgCBABggARIAxUu+kfsK6JxMJud6RCOFjtRetKT0zsgDiCESAIEAGCABEgCBABwkDFV7Wbfo/E+NRT/+Y9/Lu4jNZtvD2K1m2fVlFbdkAcwQgQBIgAQYAIEASIAGGg2umEY/H9t+gFqz+bftUm7TATW0VfL/1/12c+2gFxBIMAESAIEAGCABEgCJD6xc8J+Xu2Eq179GIvWjdqE5PSE4lU+jt///ApWvf89ZwdEEcwCBABggARIAgQAYIAeTiKPzE9vfKeTgZKT0yaPpG4+nwYrfv1o7IDggARIAgQAYIAESAIEAHCXTp1vXF8j8nLg+wFq4ts2YhNJB4/y/aYyelZOyCOYBAgAgQBIkAQIAIEATJ84klI//xrtO7J1HzRD1j9XorWmVzcT/ok9JQnpuMIBgEiQBAgAgQBIkAQII3Q6e73oyvWvVb2ZPW5VjaRqOsehNLSyUVqZ+06XFnP5MIOiCMYBIgAQYAIEASIAEGAPCjFr373lsOJyWJ2O0o6MUnvWUnlE4my6ppI2AFxBIMAESAIEAGCABEgCJChVNtV93Rikjo++Vn0843aRMIOiABBgAgQBIgAQYAIEATIULoBrxl4Y0YlV1sAAAAASUVORK5CYII=",smelt:true,unit:"블록"},
+ emerald:{name:"에메랄드 블록",img:"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGQAAAB4CAYAAAAE9le0AAABz0lEQVR42u3dsUqCURiA4WN0A0EhNHUBNQV1D02CQ3MOEXQPDdHUHtTi7FDQHbgHDaEUFIQ0BH8GLS0NVrfwDQfPz+/zzoej+XAOfInaSqXqpr9U525Sq8TDLiXVKiBABASIgAARECCad8ulJvCX62lou8Pvq6xP7/HjNbSuSv3YfxIyT/ROiCtLQIAICBABASIgJvUyE/j4963IH1zd34XWtc97sf2egxP9KDbROyGuLAEBIiBABASIgCz8pN6QCbzYRH8bnOg7sYneCXFlCQgQAQEiIEAEZOEn9WDRCfxocpH1CV5uHGfdb5gGsYXTWdaJ3glxZQkIEAEBIiACAkR5J/W6N/qZ5N3w/Su2bm3VCXFlCQgQAREQIAICRECACAgQAREQIAICRECaWe3fU8/+Xnnm2ts7oXVVGjshriwBASIgQAREQICoAZN6tOHsKbbw4TO2bn3FCREQIAICRECACAgQzb/4b4EHvyM+7W/G9gt+Y1v48+LRghP46cFZaN3Jbjf2uH6lzZUlIEAEBIiACAgQ5Z3UGzLRt3t7oXVVp591AndCXFkCAkRAgAiIgABRoUk92lZwoi/VqMxr44S4sgQEiIAAERAgArLg/QMt1Vc7xj7dFAAAAABJRU5ErkJggg==",smelt:false,unit:"블록"},
+ diamond:{name:"다이아몬드",img:"data:image/png;base64,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",smelt:false,unit:"개"}
+};
+let priceSync=false, qtySync=false, xpQtySync=false, xpPriceSync=false;
+const n=id=>Math.max(0,Number($(id).value)||0), fmt=v=>Math.floor(v).toLocaleString("ko-KR"), trim=v=>Number(v.toFixed(2)).toString();
+const smeltLv=m=>Math.min(1000,Math.floor(m/2)), miningApplied=m=>Math.min(1000,m);
+const xpMult=s=>Math.max(1,Math.min(8,Math.floor(s/125)));
+const fuelMult=s=>1+(s>=500)+(s>=750)+(s>=1000);
+const superSec=m=>{m=miningApplied(m);return m<50?0:3+Math.floor((m-50)/50)};
+
+function syncCommodityPrice(k,src){
+ if(priceSync)return; priceSync=true;
+ if(src==="each") $(k+"Stack").value=Math.round(n(k+"Each")*64);
+ else $(k+"Each").value=trim(n(k+"Stack")/64);
+ priceSync=false; calc();
+}
+function syncOrePrice(k,src){
+ if(priceSync)return; priceSync=true;
+ let perSet=src==="set"?n(k+"RawSetPrice"):src==="row"?n(k+"RawRowPrice")/9:n(k+"RawDoublePrice")/54;
+ $(k+"RawSetPrice").value=trim(perSet);
+ $(k+"RawRowPrice").value=Math.round(perSet*9);
+ $(k+"RawDoublePrice").value=Math.round(perSet*54);
+ priceSync=false; calc();
+}
+function syncSmeltQty(k,src){
+ if(qtySync)return; qtySync=true;
+ let sets=src==="sets"?n(k+"Sets"):src==="rows"?n(k+"Rows")*9:n(k+"Double")*54;
+ $(k+"Sets").value=trim(sets); $(k+"Rows").value=trim(sets/9); $(k+"Double").value=trim(sets/54);
+ qtySync=false; calc();
+}
+function syncXpQty(src){
+ if(xpQtySync)return; xpQtySync=true;
+ let sets=src==="sets"?n("xpSets"):src==="chests"?n("xpChests")*27:n("xpDouble")*54;
+ $("xpSets").value=trim(sets); $("xpChests").value=trim(sets/27); $("xpDouble").value=trim(sets/54);
+ xpQtySync=false; calc();
+}
+function syncXpPrice(src){
+ if(xpPriceSync)return; xpPriceSync=true;
+ let p=src==="set"?n("xpSetPrice"):src==="chest"?n("xpChestPrice")/27:n("xpDoublePrice")/54;
+ $("xpSetPrice").value=Math.round(p); $("xpChestPrice").value=Math.round(p*27); $("xpDoublePrice").value=Math.round(p*54);
+ xpPriceSync=false; calc();
+}
+
+
+const QUANTITY_IDS=[
+  "xpSets","xpChests","xpDouble","coalQty","copperSets","copperRows","copperDouble",
+  "ironSets","ironRows","ironDouble","goldSets","goldRows","goldDouble",
+  "emeraldQty","diamondQty","ancientFragmentQty","shardQty"
+];
+const PRESET_STORE=STORE+"_pricePresets";
+let latestSummaryText="";
+let toastTimer=null;
+let saveIndicatorTimer=null;
+function setSaveIndicator(state,text){
+  const indicator=$("saveIndicator");
+  const label=$("saveIndicatorText");
+  if(!indicator||!label)return;
+  indicator.classList.remove("saving","saved");
+  indicator.classList.add(state);
+  label.textContent=text;
+}
+function markSaving(){
+  setSaveIndicator("saving","변경 사항 저장 중");
+  clearTimeout(saveIndicatorTimer);
+  saveIndicatorTimer=setTimeout(()=>setSaveIndicator("saved","자동 저장됨"),450);
+}
+function validateNumberInput(input){
+  if(!input||input.type!=="number")return true;
+  let value=Number(input.value);
+  const min=input.min!==""?Number(input.min):null;
+  const max=input.max!==""?Number(input.max):null;
+  if(!Number.isFinite(value))value=0;
+  if(min!==null&&value<min)value=min;
+  if(max!==null&&value>max)value=max;
+  input.value=value;
+  input.classList.remove("invalid-input");
+  return true;
+}
+function setupInputSafety(){
+  document.querySelectorAll('input[type="number"]').forEach(input=>{
+    input.addEventListener("blur",()=>validateNumberInput(input));
+    input.addEventListener("input",()=>{
+      if(Number(input.value)<0)input.classList.add("invalid-input");
+      else input.classList.remove("invalid-input");
+      markSaving();
+    });
+  });
+}
+function setupScrollTop(){
+  const button=$("scrollTopBtn");
+  const refresh=()=>button.classList.toggle("show",window.scrollY>500);
+  window.addEventListener("scroll",refresh,{passive:true});
+  button.onclick=()=>window.scrollTo({top:0,behavior:"smooth"});
+  refresh();
+}
+
+
+function showToast(message){
+  const toast=$("toast");
+  toast.textContent=message;
+  toast.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>toast.classList.remove("show"),2200);
+}
+function resetQuantities(){
+  if(!confirm("모든 수량을 0으로 초기화할까요? 시세, 레벨, 실제 측정값은 유지됩니다."))return;
+  QUANTITY_IDS.forEach(id=>{if($(id))$(id).value=0});
+  calc();
+  showToast("수량을 초기화했습니다.");
+}
+function getPriceSnapshot(){
+  const values={};
+  PRICE_IDS.forEach(id=>{if($(id))values[id]=n(id)});
+  return values;
+}
+function applyPriceSnapshot(values){
+  Object.entries(values||{}).forEach(([id,value])=>{if($(id))$(id).value=value});
+  ["coal","copper","iron","gold","emerald","diamond"].forEach(k=>{
+    if($(k+"Each")&&$(k+"Stack"))$(k+"Stack").value=Math.round(n(k+"Each")*64);
+  });
+  if($("shardEach"))$("shardStack").value=Math.round(n("shardEach")*64);
+  if($("xpSetPrice")){
+    $("xpChestPrice").value=Math.round(n("xpSetPrice")*27);
+    $("xpDoublePrice").value=Math.round(n("xpSetPrice")*54);
+  }
+  calc();
+}
+function readPresets(){
+  try{return JSON.parse(localStorage.getItem(PRESET_STORE)||"[]")}catch(e){return []}
+}
+function writePresets(list){
+  localStorage.setItem(PRESET_STORE,JSON.stringify(list));
+  updatePresetCount();
+}
+function updatePresetCount(){
+  const count=readPresets().length;
+  $("presetCountText").textContent="저장된 프리셋 "+count+"개";
+}
+function savePricePreset(){
+  const name=(prompt("시세 프리셋 이름을 입력하세요.","현재 시세")||"").trim();
+  if(!name)return;
+  const list=readPresets();
+  const existing=list.findIndex(p=>p.name===name);
+  const preset={name,createdAt:new Date().toISOString(),prices:getPriceSnapshot()};
+  if(existing>=0){
+    if(!confirm("같은 이름의 프리셋이 있습니다. 덮어쓸까요?"))return;
+    list[existing]=preset;
+  }else list.unshift(preset);
+  writePresets(list.slice(0,20));
+  showToast("시세 프리셋을 저장했습니다.");
+}
+function renderPresetList(){
+  const list=readPresets();
+  if(!list.length){
+    $("presetList").innerHTML='<div class="empty-state">저장된 시세 프리셋이 없습니다.</div>';
+    return;
+  }
+  $("presetList").innerHTML=list.map((p,index)=>`
+    <div class="preset-item">
+      <div><h4>${escapeHtml(p.name)}</h4><p>${new Date(p.createdAt).toLocaleString("ko-KR")}</p></div>
+      <div class="preset-actions">
+        <button data-load-preset="${index}">적용</button>
+        <button class="delete" data-delete-preset="${index}">삭제</button>
+      </div>
+    </div>`).join("");
+}
+function openPresetModal(){
+  renderPresetList();
+  $("presetModal").hidden=false;
+}
+function closePresetModal(){$("presetModal").hidden=true}
+function escapeHtml(value){
+  return String(value).replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[ch]));
+}
+async function copySummary(){
+  if(!latestSummaryText)calc();
+  try{
+    await navigator.clipboard.writeText(latestSummaryText);
+    showToast("계산 결과를 복사했습니다.");
+  }catch(e){
+    const area=document.createElement("textarea");
+    area.value=latestSummaryText;document.body.appendChild(area);area.select();
+    document.execCommand("copy");area.remove();
+    showToast("계산 결과를 복사했습니다.");
+  }
+}
+function exportBackup(){
+  save();
+  const payload={
+    app:"Block's Mining Manager",
+    version:"1.1",
+    exportedAt:new Date().toISOString(),
+    userData:JSON.parse(localStorage.getItem(STORE)||"{}"),
+    presets:readPresets(),
+    measurementUpdatedAt:localStorage.getItem(STORE+"_measurementUpdatedAt")
+  };
+  const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");
+  a.href=url;a.download="BMM_v1_0_backup_"+new Date().toISOString().slice(0,10)+".json";
+  a.click();URL.revokeObjectURL(url);
+  showToast("백업 파일을 만들었습니다.");
+}
+function importBackupFile(file){
+  const reader=new FileReader();
+  reader.onload=()=>{
+    try{
+      const payload=JSON.parse(reader.result);
+      if(!payload||typeof payload.userData!=="object")throw new Error("invalid");
+      localStorage.setItem(STORE,JSON.stringify(payload.userData));
+      if(Array.isArray(payload.presets))localStorage.setItem(PRESET_STORE,JSON.stringify(payload.presets));
+      if(payload.measurementUpdatedAt)localStorage.setItem(STORE+"_measurementUpdatedAt",payload.measurementUpdatedAt);
+      else localStorage.removeItem(STORE+"_measurementUpdatedAt");
+      showToast("백업을 불러왔습니다.");
+      setTimeout(()=>location.reload(),600);
+    }catch(e){alert("올바른 BMM 백업 파일이 아닙니다.")}
+  };
+  reader.readAsText(file);
+}
+const PRICE_IDS=[
+  "coalEach","coalStack","copperEach","copperStack","ironEach","ironStack",
+  "goldEach","goldStack","emeraldEach","emeraldStack","diamondEach","diamondStack",
+  "xpSetPrice","xpChestPrice","xpDoublePrice","ancientDebrisPrice","shardEach","shardStack",
+  "copperRawSetPrice","copperRawRowPrice","copperRawDoublePrice",
+  "ironRawSetPrice","ironRawRowPrice","ironRawDoublePrice",
+  "goldRawSetPrice","goldRawRowPrice","goldRawDoublePrice"
+];
+const DEFAULT_MEASUREMENT={sampleInput:576,sampleOutput:813,xpCostPerBottle:10,ironXp:1.2,goldXp:1.8,copperXp:0.7};
+
+function resetPrices(){
+  if(!confirm("입력한 시세만 모두 0으로 초기화할까요? 수량, 레벨, 실제 측정값은 유지됩니다.")) return;
+  PRICE_IDS.forEach(id=>{if($(id))$(id).value=0});
+  calc();
+  showToast("시세를 초기화했습니다.");
+}
+function formatDateTime(value){
+  if(!value)return "저장 기록 없음";
+  try{return new Date(value).toLocaleString("ko-KR")}catch(e){return value}
+}
+function updateMeasurementStatus(){
+  const raw=localStorage.getItem(STORE+"_measurementUpdatedAt");
+  $("measurementUpdatedAt").textContent=formatDateTime(raw);
+  $("measurementStatusText").textContent=raw?"관리자 저장값 사용 중":"기본 실측값 사용 중";
+}
+function saveMeasurement(){
+  if(!unlocked)return;
+  if(!confirm("현재 실제 측정값을 이 브라우저에 저장할까요?"))return;
+  const now=new Date().toISOString();
+  localStorage.setItem(STORE+"_measurementUpdatedAt",now);
+  save();
+  updateMeasurementStatus();
+  alert("실제 측정값이 저장되었습니다.");
+}
+function resetMeasurement(){
+  if(!unlocked)return;
+  if(!confirm("실제 측정값을 기본값으로 되돌릴까요?"))return;
+  Object.entries(DEFAULT_MEASUREMENT).forEach(([id,value])=>$(id).value=value);
+  localStorage.removeItem(STORE+"_measurementUpdatedAt");
+  calc();
+  updateMeasurementStatus();
+}
+function save(){
+ let d={
+   miningInput:n("miningInput"),xpSets:n("xpSets"),xpSetPrice:n("xpSetPrice"),
+   include:$("includeSmeltingXpRevenue").checked,
+   ancientFragmentQty:n("ancientFragmentQty"),ancientDebrisPrice:n("ancientDebrisPrice"),shardQty:n("shardQty"),shardEach:n("shardEach"),shardStack:n("shardStack"),
+ };
+ Object.keys(items).forEach(k=>{
+   if(items[k].smelt){
+     d[k+"Sets"]=n(k+"Sets");
+     d[k+"RawSetPrice"]=n(k+"RawSetPrice");
+     d[k+"RawRowPrice"]=n(k+"RawRowPrice");
+     d[k+"RawDoublePrice"]=n(k+"RawDoublePrice");
+   }else d[k+"Qty"]=n(k+"Qty");
+   d[k+"Each"]=n(k+"Each");
+ });
+ ["sampleInput","sampleOutput","xpCostPerBottle","ironXp","goldXp","copperXp"].forEach(id=>d[id]=n(id));
+ localStorage.setItem(STORE,JSON.stringify(d)); markSaving();
+}
+function load(){
+ try{
+  let d=JSON.parse(localStorage.getItem(STORE)||"null"); if(!d)return;
+  Object.entries(d).forEach(([k,v])=>{if($(k)&&$(k).type!=="checkbox")$(k).value=v});
+  if(typeof d.include==="boolean")$("includeSmeltingXpRevenue").checked=d.include; else $("includeSmeltingXpRevenue").checked=true;
+  $("miningRange").value=$("miningInput").value;
+  ["copper","iron","gold"].forEach(k=>{
+    syncSmeltQty(k,"sets");
+    syncOrePrice(k,"set");
+  });
+  Object.keys(items).forEach(k=>syncCommodityPrice(k,"each"));
+ }catch(e){console.warn(e)}
+}
+function calc(){
+ const mining=Math.min(2000,Math.floor(n("miningInput"))), smelting=smeltLv(mining), applied=miningApplied(mining);
+ const measured=n("sampleOutput")/Math.max(1,n("sampleInput")), smeltMultiplier=1+(measured-1)*(smelting/1000);
+ $("smeltingDisplay").value=smelting;$("smeltingRange").value=smelting;$("miningApplied").textContent=applied;$("smeltingApplied").textContent=smelting;
+ $("doubleSmeltChance").textContent=(smelting*.04).toFixed(3)+"%";$("xpMultStat").textContent=xpMult(smelting)+"배";$("fuelStat").textContent=fuelMult(smelting)+"배";$("superStat").textContent=superSec(mining)+"초";
+ $("heroMining").textContent=mining;$("heroMiningApplied").textContent=applied;$("heroSmelting").textContent=smelting;$("heroSmeltMult").textContent=smeltMultiplier.toFixed(3)+"배";
+ let total=0,cards=[], totalXp=0,revenueItems=[],smeltDetails=[];
+ Object.entries(items).forEach(([k,m])=>{
+   let inputQty=m.smelt?n(k+"Sets")*64:n(k+"Qty");
+   let finalQty=m.smelt?inputQty*smeltMultiplier:inputQty;
+   let revenue=0;
+   let displayName=m.name;
+   let resultDetail="";
+   let rawRevenue=0;
+   let smeltRevenue=0;
+   let useRaw=false;
+
+   if(m.smelt){
+      const rawSets=n(k+"Sets");
+      rawRevenue=rawSets*n(k+"RawSetPrice");
+
+      const blockRevenue=finalQty*n(k+"Each");
+      const baseXp=k==="iron"?n("ironXp"):k==="gold"?n("goldXp"):n("copperXp");
+      const xpContribution=inputQty*9*baseXp*xpMult(smelting);
+      const xpCost=Math.max(1,n("xpCostPerBottle"));
+      const estimatedBottles=Math.floor(xpContribution/xpCost);
+      const estimatedSets=estimatedBottles/64;
+      const estimatedXpRevenue=Math.round(estimatedSets*n("xpSetPrice"));
+
+      smeltRevenue=blockRevenue;
+      revenue=blockRevenue;
+      displayName=m.name;
+      totalXp+=xpContribution;
+      smeltDetails.push({k,blockRevenue,xpContribution,estimatedBottles,estimatedSets,estimatedXpRevenue});
+
+      $(k+"Output").textContent=trim(finalQty)+"블록 · "+trim(finalQty/64)+"셋";
+      $(k+"XpOutput").textContent="예상 경험치 병 "+fmt(estimatedBottles)+"병 · "+trim(estimatedSets)+"셋 · "+fmt(estimatedXpRevenue)+"원";
+      $(k+"RawRevenue").textContent=fmt(rawRevenue)+"원";
+
+      resultDetail=trim(finalQty/64)+"셋 · 제련 후 블록 판매가 "+fmt(revenue)+"원";
+   }else{
+      revenue=finalQty*n(k+"Each");
+      resultDetail=trim(finalQty/64)+"셋 · 예상 판매가 "+fmt(revenue)+"원";
+   }
+
+   total+=revenue;
+   if(revenue>0)revenueItems.push({name:displayName,value:revenue});
+
+   const hasPrice=m.smelt
+     ? n(k+"Each")>0||n(k+"RawSetPrice")>0
+     : n(k+"Each")>0;
+
+   if(inputQty>0||hasPrice){
+      cards.push(`<div class="result"><div class="result-head"><img src="${m.img}" alt=""><div class="result-name">${displayName}</div></div><div class="result-value">${trim(finalQty)+m.unit}</div><div class="result-detail">${resultDetail}</div></div>`);
+   }
+ });
+ const xpSets=n("xpSets"), xpRev=xpSets*n("xpSetPrice"); total+=xpRev; if(xpRev>0)revenueItems.push({name:"경험치 병",value:xpRev});
+ if(xpSets>0||n("xpSetPrice")>0)cards.push(`<div class="result"><div class="result-head"><img src="data:image/png;base64,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" alt=""><div class="result-name">경험치 병</div></div><div class="result-value">${trim(xpSets)}셋</div><div class="result-detail">${trim(xpSets/27)}상자 · ${trim(xpSets/54)}큰상자 · ${fmt(xpRev)}원</div></div>`);
+ const xpCost=Math.max(1,n("xpCostPerBottle"));
+ const bottles=Math.floor(totalXp/xpCost);
+ const sets=bottles/64;
+ const calculatedXpRevenue=Math.round(sets*n("xpSetPrice"));
+ const includeXpRevenue=$("includeSmeltingXpRevenue").checked;
+ const smeltXpRev=includeXpRevenue?calculatedXpRevenue:0;
+
+ if(includeXpRevenue){
+   total+=smeltXpRev;
+   if(smeltXpRev>0)revenueItems.push({name:"제련 경험치 병",value:smeltXpRev});
+ }
+
+ // Distribute the exact global XP-bottle revenue among copper/iron/gold cards.
+ // Integer allocation plus a final remainder keeps the card totals exactly aligned.
+ let allocatedXpRevenue=0;
+ const activeSmeltDetails=smeltDetails.filter(detail=>detail.xpContribution>0);
+ smeltDetails.forEach(detail=>{
+   let xpRevenueShare=0;
+   if(includeXpRevenue&&totalXp>0&&detail.xpContribution>0){
+     const activeIndex=activeSmeltDetails.indexOf(detail);
+     const isLast=activeIndex===activeSmeltDetails.length-1;
+     xpRevenueShare=isLast
+       ? smeltXpRev-allocatedXpRevenue
+       : Math.floor(smeltXpRev*(detail.xpContribution/totalXp));
+     allocatedXpRevenue+=xpRevenueShare;
+   }
+
+   const cardSmeltTotal=Math.round(detail.blockRevenue)+xpRevenueShare;
+   $(detail.k+"SmeltRevenue").textContent=fmt(cardSmeltTotal)+"원";
+   $(detail.k+"XpOutput").textContent=
+     "예상 경험치 병 "+fmt(detail.estimatedBottles)+"병 · "+
+     trim(detail.estimatedSets)+"셋 · 판매가 "+fmt(xpRevenueShare)+"원";
+ });
+
+ const fragmentQty=n("ancientFragmentQty");
+ const ancientDebris=Math.floor(fragmentQty/8);
+ const fragmentRemain=Math.floor(fragmentQty%8);
+ const ancientRev=ancientDebris*n("ancientDebrisPrice");
+ const shardRev=n("shardQty")*n("shardEach");
+ total+=ancientRev+shardRev; if(ancientRev>0)revenueItems.push({name:"고대잔해",value:ancientRev}); if(shardRev>0)revenueItems.push({name:"샤드",value:shardRev});
+ $("ancientDebrisResult").textContent=fmt(ancientDebris)+"개";
+ $("ancientFragmentRemain").textContent=fmt(fragmentRemain)+"개";
+ $("ancientRevenue").textContent=fmt(ancientRev)+"원";$("shardRevenue").textContent=fmt(shardRev)+"원";
+ $("xpSummaryTotal").textContent=fmt(totalXp)+" EXP";$("xpSummaryBottles").textContent=fmt(bottles)+"병";$("xpSummarySets").textContent=trim(sets)+"셋";$("xpSummaryContainers").textContent=trim(sets/27)+" / "+trim(sets/54);$("smeltingXpRevenue").textContent=fmt(calculatedXpRevenue)+"원";$("smeltingXpRevenueStatus").textContent=$("includeSmeltingXpRevenue").checked?"총 판매가에 포함":"총 판매가에서 제외";$("smeltingXpRevenueStatus").className=$("includeSmeltingXpRevenue").checked?"ok":"";
+
+ revenueItems.sort((a,b)=>b.value-a.value);
+ const maxRevenue=revenueItems.length?revenueItems[0].value:1;
+ $("activeRevenueCount").textContent=revenueItems.length+"개 항목";
+ $("revenueRanking").innerHTML=revenueItems.length?revenueItems.slice(0,8).map((item,index)=>`
+   <div class="ranking-row">
+     <span class="rank-number">${index+1}</span>
+     <span class="rank-name">${escapeHtml(item.name)}</span>
+     <span class="rank-bar"><span style="width:${Math.max(4,item.value/maxRevenue*100)}%"></span></span>
+     <span class="rank-value">${fmt(item.value)}원</span>
+   </div>`).join(""):'<div class="empty-state">수량과 시세를 입력하면 수익 순위가 표시됩니다.</div>';
+ const top=revenueItems[0];
+ $("topRevenueName").textContent=top?top.name:"-";
+ $("topRevenueValue").textContent=top?fmt(top.value)+"원":"0원";
+ $("analysisXpBottles").textContent=fmt(bottles)+"병";
+ $("analysisXpValue").textContent=fmt(calculatedXpRevenue)+"원";
+ $("rareRevenueValue").textContent=fmt(ancientRev+shardRev)+"원";
+
+ latestSummaryText=[
+   "BMM 계산 결과",
+   "총 판매가: "+fmt(total)+"원",
+   "채광 레벨: "+mining+" / 제련 레벨: "+smelting,
+   "예상 제련 경험치: "+fmt(totalXp)+" EXP",
+   "제련 경험치 병: "+fmt(bottles)+"병 ("+trim(sets)+"셋)",
+   "",
+   "수익 순위",
+   ...revenueItems.map((item,index)=>(index+1)+". "+item.name+": "+fmt(item.value)+"원")
+ ].join("\n");
+
+ $("grandTotal").textContent=fmt(total);$("results").innerHTML=cards.length?cards.join(""):'<div class="help">수량과 시세를 입력하면 결과가 표시됩니다.</div>';
+ save();
+}
+$$(".tab").forEach(t=>t.onclick=()=>{$$(".tab").forEach(x=>x.classList.remove("active"));$$(".tabpage").forEach(x=>x.classList.remove("active"));t.classList.add("active");$(t.dataset.tab).classList.add("active")});
+["coal","emerald","diamond"].forEach(k=>{$(k+"Qty").oninput=calc;$(k+"Each").oninput=()=>syncCommodityPrice(k,"each");$(k+"Stack").oninput=()=>syncCommodityPrice(k,"stack")});
+["copper","iron","gold"].forEach(k=>{
+ $(k+"Sets").oninput=()=>syncSmeltQty(k,"sets");
+ $(k+"Rows").oninput=()=>syncSmeltQty(k,"rows");
+ $(k+"Double").oninput=()=>syncSmeltQty(k,"double");
+ $(k+"Each").oninput=()=>syncCommodityPrice(k,"each");
+ $(k+"Stack").oninput=()=>syncCommodityPrice(k,"stack");
+ $(k+"RawSetPrice").oninput=()=>syncOrePrice(k,"set");
+ $(k+"RawRowPrice").oninput=()=>syncOrePrice(k,"row");
+ $(k+"RawDoublePrice").oninput=()=>syncOrePrice(k,"double");
+});
+$("xpSets").oninput=()=>syncXpQty("sets");$("xpChests").oninput=()=>syncXpQty("chests");$("xpDouble").oninput=()=>syncXpQty("double");
+$("xpSetPrice").oninput=()=>syncXpPrice("set");
+$("xpChestPrice").oninput=()=>syncXpPrice("chest");
+$("xpDoublePrice").oninput=()=>syncXpPrice("double");
+$("xpCostPerBottle").oninput=calc;
+["ironXp","goldXp","copperXp"].forEach(id=>$(id).oninput=calc);
+$("miningInput").oninput=()=>{$("miningInput").value=Math.min(2000,Math.floor(n("miningInput")));$("miningRange").value=$("miningInput").value;calc()};
+$("miningRange").oninput=()=>{$("miningInput").value=$("miningRange").value;calc()};
+["sampleInput","sampleOutput","xpCostPerBottle","ironXp","goldXp","copperXp"].forEach(id=>$(id).oninput=calc);
+$("includeSmeltingXpRevenue").onchange=calc;
+["ancientFragmentQty","ancientDebrisPrice","shardQty"].forEach(id=>$(id).oninput=calc);
+$("shardEach").oninput=()=>{
+  $("shardStack").value=Math.round(n("shardEach")*64);
+  calc();
+};
+$("shardStack").oninput=()=>{
+  $("shardEach").value=trim(n("shardStack")/64);
+  calc();
+};
+$("saveBtn").onclick=()=>{save();setSaveIndicator("saved","수동 저장 완료");showToast("현재 값을 안전하게 저장했습니다.")};
+$("copySummaryBtn").onclick=copySummary;
+$("exportBtn").onclick=exportBackup;
+$("importBtn").onclick=()=>$("importFile").click();
+$("importFile").onchange=e=>{const file=e.target.files[0];if(file)importBackupFile(file)};
+$("resetQuantitiesBtn").onclick=resetQuantities;
+$("resetPricesBtn").onclick=resetPrices;
+$("savePresetBtn").onclick=savePricePreset;
+$("loadPresetBtn").onclick=openPresetModal;
+$("closePresetModal").onclick=closePresetModal;
+$("presetModal").onclick=e=>{if(e.target===$("presetModal"))closePresetModal()};
+$("presetList").onclick=e=>{
+  const loadButton=e.target.closest("[data-load-preset]");
+  const deleteButton=e.target.closest("[data-delete-preset]");
+  const list=readPresets();
+  if(loadButton){
+    const preset=list[Number(loadButton.dataset.loadPreset)];
+    if(preset){applyPriceSnapshot(preset.prices);closePresetModal();showToast("시세 프리셋을 적용했습니다.")}
+  }
+  if(deleteButton){
+    const index=Number(deleteButton.dataset.deletePreset);
+    if(confirm("이 프리셋을 삭제할까요?")){list.splice(index,1);writePresets(list);renderPresetList()}
+  }
+};
+$("saveMeasurementBtn").onclick=saveMeasurement;
+$("resetMeasurementBtn").onclick=resetMeasurement;
+$("resetBtn").onclick=()=>{
+  if(!confirm("모든 개인 입력값을 초기화할까요? 시세 프리셋은 유지됩니다."))return;
+  localStorage.removeItem(STORE);
+  localStorage.removeItem(STORE+"_measurementUpdatedAt");
+  location.reload();
+};
+const ADMIN_PIN="2580";
+let unlocked=sessionStorage.getItem("pmlMeasureUnlock")==="yes";
+function lockUI(){
+  $$(".measurement-input").forEach(i=>i.disabled=!unlocked);
+  $("measurementLockBtn").textContent=unlocked?"관리자 잠금":"관리자 잠금 해제";
+  $("measurementLockNotice").textContent=unlocked?"관리자 편집 모드":"관리자 전용";
+  $("measurementLockNotice").classList.toggle("unlocked",unlocked);
+  $("saveMeasurementBtn").disabled=!unlocked;
+  $("resetMeasurementBtn").disabled=!unlocked;
+}
+$("measurementLockBtn").onclick=()=>{
+  if(unlocked){
+    unlocked=false;
+    sessionStorage.removeItem("pmlMeasureUnlock");
+    lockUI();
+    return;
+  }
+  const p=prompt("관리자 PIN을 입력하세요.");
+  if(p===null)return;
+  if(p===ADMIN_PIN){
+    unlocked=true;
+    sessionStorage.setItem("pmlMeasureUnlock","yes");
+    lockUI();
+    alert("관리자 잠금이 해제되었습니다.");
+  }else{
+    alert("PIN이 올바르지 않습니다.");
+  }
+};
+load();
+lockUI();
+updateMeasurementStatus();
+updatePresetCount();
+setupInputSafety();
+setupScrollTop();
+calc();
+setSaveIndicator("saved","자동 저장 활성화");
+})();
+</script>
+</body>
+</html>
